@@ -19512,7 +19512,7 @@ MonoBehaviour:
   BrakeAnimator: {fileID: 1561089686252911106}
   KeyboardControl: 98
   ParkBreakControl: 110
-  ParkBreakSet: 0
+  ParkBreakSet: 1
   AirbrakeStrength: 1.7
   NoPilotAlwaysParkBrake: 1
   SAVControl: {fileID: 7941525626698614549}
