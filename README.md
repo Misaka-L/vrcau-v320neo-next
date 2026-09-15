@@ -56,13 +56,15 @@ Currently v320neo-next fix serval issues that prevent original [VAU320][old-vau3
 
 ### Dependencies
 
-Please setup [Virtual-CNS][virtual-cns-github] and [UdonRadioCommunication-Redux][urc-redux-github] first, see [setup document here](docs/setup-virtual-cnd-and-urc.md)
+- Setup [Virtual-CNS][virtual-cns-github] and [UdonRadioCommunication-Redux][urc-redux-github] first
+  - see [setup document here](docs/setup-virtual-cnd-and-urc.md)
+- Install latest `Flight Menu` and `Flight Menu - Udon Radio Communications Redux Integration` from [our vpm repository](vpm-repo-home).
 
 ### Install aircraft package
 
 1. Clone or download this repository
 2. Copy `src/Packages/org.vrcau.vpm.aircrafts.v320neo-next` to the `Packages` folder of your project, or use `Add package from disk...` in Unity Package Manager.
-3. Download match assets package from [assets package repository][assets-github].
+3. Download match assets package from [our assets packages vpm repository][assets-vpm-repo-home].
    1. You can find match assets package version in `src/Packages/org.vrcau.vpm.aircrafts.v320neo-next\package.json`.
    2. Assets package version use [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
@@ -97,4 +99,5 @@ If you want to join the development of aircraft, please contact us use following
 [urc-redux-github]: https://github.com/VirtualAviationJapan/UdonRadioCommunications-Redux
 [urc-original-github]: https://github.com/esnya/UdonRadioCommunications
 [virtual-cns-github]: https://github.com/VirtualAviationJapan/Virtual-CNS
-[assets-github]: https://github.com/vrcau/v320neo-next-assets
+[assets-vpm-repo-home]: https://vpm.vrcau.org/public-assets/
+[vpm-repo-home]: https://vpm.vrcau.org/public/
