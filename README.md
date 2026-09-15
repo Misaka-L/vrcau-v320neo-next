@@ -14,8 +14,12 @@ Currently v320neo-next fix serval issues that prevent original [VAU320][old-vau3
 
 ### Changes
 
-- Upgrade to [SaccFlight][saccflight-github] v1.8.1
-- Use [Udon Radio Communications Redux][urc-redux-github]. (Active maintenance and improved version of [original URC][urc-original-github])
+- Upgrade to SaccFlight v1.8.1
+- Out-of-box experience, setup aircraft with just few clicks.
+  - Drag `VAU320GlobalAircraftSettings` and aircraft prefab to scene
+  - Click `Auto Setup` and select VHF voice protocol from UdonRadioCommunication
+  - You are good to go! But you still need to setup `UdonRadioCommunication-Redux` and `NavaidDatabase` first.
+- Use Udon Radio Communications Redux. (Active maintenance and improved version of original URC)
 - Adjust the SaccFlight DFUNC position.
 - Assets like models, sounds and texture are moved into separated package.
   - Upgrade aircraft system won't require re-download all assets.
@@ -23,22 +27,24 @@ Currently v320neo-next fix serval issues that prevent original [VAU320][old-vau3
 
 ### Added
 
+- Migrate whole sacc dial to [flight-menu](https://github.com/vrcau/flight-menu) system.
+  - Menu will show as overlay in desktop mode, and follow you hand in VR.
+  - You can change VHF RX/TX and frequency using a input menu.
+  - See how many trim you have apply, and change trim by push/pull thumbtack in trim menu.
+  - Choice auto brake arm mode from menu.
+  - Set almost everything using thumbtack instead of hold trigger and move your controller.
+- Functional flight director and auto pilot, just like real A320 do.
+- New `LocalAircraftSettings` and `GlobalAircraftSetting` help you setup aircraft and change settings.
 - Instrument rendering in static camera to reduce instrument glitch when far away from world origin.
 - Functional ND map display. (map will move and rotation as aircraft moving, instead of stop at world origin).
 - Workaround for camera position shifting in desktop mode.
-- Sacc flight dial show as overlay for desktop mode, and following player hands (just like Action Menu) in VR.
 
 ### Fixed
 
-- Fully functional boarding collider from [EsnyaSFAddons][esnya-sf-addons-github] which can make player follow the plane as it moves.
-  - The boarding collider in [original VAU320][old-vau320-github] only have a collider.
 - Performance issue during A/THR activated.
 - Gust wind won't show in ND wind display.
 - Speed trend in PFD show inflated readings.
-
-### Chore
-
-- U# asset of `FWSWanringData` won't change every compile.
+- U# asset of `FWSWanringData` will change every compile.
 
 ## Install
 
