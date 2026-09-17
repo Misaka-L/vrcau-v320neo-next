@@ -39,17 +39,17 @@ namespace VAU.V320NeoNext.Runtime.Bus.Samples
         {
             // 订阅必须在这里注册：Bus 每次启动都会清空重建订阅表，
             // 所以只有 _OnAvionicsBusStart() 里的注册才是有效的。
-            _SubscribeFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADR_AltitudeFeet, nameof(Sample_OnAdrAltitudeChanged));
-            _SubscribeFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADR_VerticalSpeedFeetPerMinute, nameof(Sample_OnAdrVerticalSpeedChanged));
+            _SubscribeFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADIRS_ADR_1_AltitudeFeet, nameof(Sample_OnAdrAltitudeChanged));
+            _SubscribeFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADIRS_ADR_1_VerticalSpeedFeetPerMinute, nameof(Sample_OnAdrVerticalSpeedChanged));
             _SubscribeBool(AvionicsBusBoolDataIds.V32NN_Infrequent_EFIS_Left_Sync_LandingSystemOn, nameof(Sample_OnAdrDataValidChanged));
-            _SubscribeFloat(AvionicsBusFloatDataIds.V32NN_Infrequent_FCU_SelectedAltitudeFeet, nameof(Sample_OnFcuSelectedAltitudeChanged));
+            _SubscribeFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADIRS_ADR_1_MachNumber, nameof(Sample_OnFcuSelectedAltitudeChanged));
             _SubscribeBool(AvionicsBusBoolDataIds.V32NN_Infrequent_EFIS_Left_Sync_FlightDirectorOn, nameof(Sample_OnAdirsAlignedChanged));
             _SubscribeString(AvionicsBusStringDataIds.V32NN_Infrequent_ECAM_ActiveMessage, nameof(Sample_OnEcamMessageChanged));
             _SubscribeByte(AvionicsBusByteDataIds.V32NN_Infrequent_EFIS_Left_Sync_NavigationDisplayFilter, nameof(Sample_OnAdirsAlignmentStateChanged));
             _SubscribeVector3(AvionicsBusVector3DataIds.V32NN_Infrequent_ND_WindVector, nameof(Sample_OnNdWindChanged));
 
             // 没有订阅的数据（例如只为读数用的空速）直接读一次即可，不需要订阅
-            _altitudeFeet = _ReadFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADR_AltitudeFeet);
+            _altitudeFeet = _ReadFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADIRS_ADR_1_AltitudeFeet);
             _isDataValid = _ReadBool(AvionicsBusBoolDataIds.V32NN_Infrequent_EFIS_Left_Sync_LandingSystemOn);
 
             if (logOnNotify) Debug.Log("[Bus Sample] SubscribingInstrument subscribed");
@@ -72,7 +72,7 @@ namespace VAU.V320NeoNext.Runtime.Bus.Samples
             if (notifyThrottle > 1 && _altitudeNotifyCount % notifyThrottle != 0) return;
 
             // 变化检测：拿到通知后按需读取最新值（写入方可能已经把值改掉了）
-            float newAltitude = _ReadFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADR_AltitudeFeet);
+            float newAltitude = _ReadFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADIRS_ADR_1_AltitudeFeet);
             if (Mathf.Abs(newAltitude - _altitudeFeet) < altitudeDeadband) return;
 
             _altitudeFeet = newAltitude;
@@ -83,7 +83,7 @@ namespace VAU.V320NeoNext.Runtime.Bus.Samples
 
         public void Sample_OnAdrVerticalSpeedChanged()
         {
-            _verticalSpeedFeetPerMinute = (int)_ReadFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADR_VerticalSpeedFeetPerMinute);
+            _verticalSpeedFeetPerMinute = (int)_ReadFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADIRS_ADR_1_VerticalSpeedFeetPerMinute);
         }
 
         public void Sample_OnAdrDataValidChanged()
@@ -98,7 +98,7 @@ namespace VAU.V320NeoNext.Runtime.Bus.Samples
 
         public void Sample_OnFcuSelectedAltitudeChanged()
         {
-            float selected = _ReadFloat(AvionicsBusFloatDataIds.V32NN_Infrequent_FCU_SelectedAltitudeFeet);
+            float selected = _ReadFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADIRS_ADR_1_MachNumber);
 
             if (logOnNotify) Debug.Log("[Bus Sample] SubscribingInstrument FCU selected altitude = " + selected + " ft");
         }
