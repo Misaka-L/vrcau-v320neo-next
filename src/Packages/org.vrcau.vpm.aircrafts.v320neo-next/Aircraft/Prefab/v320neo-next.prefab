@@ -5308,6 +5308,10 @@ MonoBehaviour:
   isHide: 0
   eventTarget: {fileID: 906793013950430918}
   triggerEventName: 
+  holdStartEventName: 
+  holdEndEventName: 
+  updateHoldStateToEventTarget: 0
+  holdStateVariableName: 
   updateIsActivatedFromEventTarget: 0
   isActivatedVariableName: Cruise
   invertIsActivatedVariable: 0
@@ -5407,6 +5411,10 @@ MonoBehaviour:
   isHide: 0
   eventTarget: {fileID: 9015973210307997977}
   triggerEventName: 
+  holdStartEventName: 
+  holdEndEventName: 
+  updateHoldStateToEventTarget: 0
+  holdStateVariableName: 
   updateIsActivatedFromEventTarget: 0
   isActivatedVariableName: 
   invertIsActivatedVariable: 0
@@ -5538,6 +5546,10 @@ MonoBehaviour:
   isHide: 0
   eventTarget: {fileID: 1968102284611630082}
   triggerEventName: ToggleLandingLight
+  holdStartEventName: 
+  holdEndEventName: 
+  updateHoldStateToEventTarget: 0
+  holdStateVariableName: 
   updateIsActivatedFromEventTarget: 1
   isActivatedVariableName: isLandingLightOn
   invertIsActivatedVariable: 0
@@ -6046,6 +6058,10 @@ MonoBehaviour:
   isHide: 0
   eventTarget: {fileID: 0}
   triggerEventName: 
+  holdStartEventName: 
+  holdEndEventName: 
+  updateHoldStateToEventTarget: 0
+  holdStateVariableName: 
   updateIsActivatedFromEventTarget: 0
   isActivatedVariableName: 
   invertIsActivatedVariable: 0
@@ -6332,6 +6348,10 @@ MonoBehaviour:
   isHide: 0
   eventTarget: {fileID: 3181302139978249755}
   triggerEventName: SelectAutoBrakeLow
+  holdStartEventName: 
+  holdEndEventName: 
+  updateHoldStateToEventTarget: 0
+  holdStateVariableName: 
   updateIsActivatedFromEventTarget: 1
   isActivatedVariableName: isAutoBrakeLowSelected
   invertIsActivatedVariable: 0
@@ -6427,6 +6447,10 @@ MonoBehaviour:
   isHide: 0
   eventTarget: {fileID: 6455498516281820233}
   triggerEventName: 
+  holdStartEventName: 
+  holdEndEventName: 
+  updateHoldStateToEventTarget: 0
+  holdStateVariableName: 
   updateIsActivatedFromEventTarget: 0
   isActivatedVariableName: 
   invertIsActivatedVariable: 0
@@ -6655,6 +6679,10 @@ MonoBehaviour:
   isHide: 0
   eventTarget: {fileID: 0}
   triggerEventName: 
+  holdStartEventName: 
+  holdEndEventName: 
+  updateHoldStateToEventTarget: 0
+  holdStateVariableName: 
   updateIsActivatedFromEventTarget: 0
   isActivatedVariableName: 
   invertIsActivatedVariable: 0
@@ -7339,6 +7367,10 @@ MonoBehaviour:
   isHide: 0
   eventTarget: {fileID: 8397340840038700154}
   triggerEventName: 
+  holdStartEventName: 
+  holdEndEventName: 
+  updateHoldStateToEventTarget: 0
+  holdStateVariableName: 
   updateIsActivatedFromEventTarget: 1
   isActivatedVariableName: GearUp
   invertIsActivatedVariable: 1
@@ -7586,6 +7618,10 @@ MonoBehaviour:
   isHide: 0
   eventTarget: {fileID: 3181302139978249755}
   triggerEventName: SelectAutoBrakeMed
+  holdStartEventName: 
+  holdEndEventName: 
+  updateHoldStateToEventTarget: 0
+  holdStateVariableName: 
   updateIsActivatedFromEventTarget: 1
   isActivatedVariableName: isAutoBrakeMedSelected
   invertIsActivatedVariable: 0
@@ -12739,6 +12775,10 @@ MonoBehaviour:
   isHide: 0
   eventTarget: {fileID: 3181302139978249755}
   triggerEventName: SelectAutoBrakeOff
+  holdStartEventName: 
+  holdEndEventName: 
+  updateHoldStateToEventTarget: 0
+  holdStateVariableName: 
   updateIsActivatedFromEventTarget: 1
   isActivatedVariableName: isAutoBrakeArmOrWorking
   invertIsActivatedVariable: 1
@@ -12834,6 +12874,10 @@ MonoBehaviour:
   isHide: 0
   eventTarget: {fileID: 1948125224356613658}
   triggerEventName: _ToggleStart
+  holdStartEventName: 
+  holdEndEventName: 
+  updateHoldStateToEventTarget: 0
+  holdStateVariableName: 
   updateIsActivatedFromEventTarget: 1
   isActivatedVariableName: isIndicatorActivated
   invertIsActivatedVariable: 0
@@ -18538,6 +18582,10 @@ MonoBehaviour:
   isHide: 0
   eventTarget: {fileID: 0}
   triggerEventName: 
+  holdStartEventName: 
+  holdEndEventName: 
+  updateHoldStateToEventTarget: 0
+  holdStateVariableName: 
   updateIsActivatedFromEventTarget: 0
   isActivatedVariableName: 
   invertIsActivatedVariable: 0
@@ -18713,6 +18761,10 @@ MonoBehaviour:
   isHide: 0
   eventTarget: {fileID: 1948125224356613658}
   triggerEventName: _ToggleStart
+  holdStartEventName: 
+  holdEndEventName: 
+  updateHoldStateToEventTarget: 0
+  holdStateVariableName: 
   updateIsActivatedFromEventTarget: 1
   isActivatedVariableName: isIndicatorActivated
   invertIsActivatedVariable: 0
@@ -19788,6 +19840,10 @@ MonoBehaviour:
   isHide: 0
   eventTarget: {fileID: 3181302139978249755}
   triggerEventName: 
+  holdStartEventName: 
+  holdEndEventName: 
+  updateHoldStateToEventTarget: 0
+  holdStateVariableName: 
   updateIsActivatedFromEventTarget: 0
   isActivatedVariableName: 
   invertIsActivatedVariable: 0
@@ -20367,6 +20423,10 @@ MonoBehaviour:
   isHide: 0
   eventTarget: {fileID: 5888512830045652000}
   triggerEventName: 
+  holdStartEventName: 
+  holdEndEventName: 
+  updateHoldStateToEventTarget: 0
+  holdStateVariableName: 
   updateIsActivatedFromEventTarget: 1
   isActivatedVariableName: isVhfRxActivated
   invertIsActivatedVariable: 0
@@ -20734,6 +20794,10 @@ MonoBehaviour:
   isHide: 0
   eventTarget: {fileID: 3524264692805584608}
   triggerEventName: ToggleTx
+  holdStartEventName: 
+  holdEndEventName: 
+  updateHoldStateToEventTarget: 0
+  holdStateVariableName: 
   updateIsActivatedFromEventTarget: 1
   isActivatedVariableName: txPower
   invertIsActivatedVariable: 0
@@ -42920,6 +42984,10 @@ MonoBehaviour:
   isHide: 0
   eventTarget: {fileID: 9015973210307997977}
   triggerEventName: _TrimDown
+  holdStartEventName: 
+  holdEndEventName: 
+  updateHoldStateToEventTarget: 1
+  holdStateVariableName: isTrimDownHold
   updateIsActivatedFromEventTarget: 0
   isActivatedVariableName: 
   invertIsActivatedVariable: 0
@@ -48666,6 +48734,10 @@ MonoBehaviour:
   isHide: 0
   eventTarget: {fileID: 0}
   triggerEventName: 
+  holdStartEventName: 
+  holdEndEventName: 
+  updateHoldStateToEventTarget: 0
+  holdStateVariableName: 
   updateIsActivatedFromEventTarget: 0
   isActivatedVariableName: 
   invertIsActivatedVariable: 0
@@ -49030,6 +49102,10 @@ MonoBehaviour:
   isHide: 0
   eventTarget: {fileID: 906793013950430918}
   triggerEventName: _DecreaseSetSpeedBy1Kt
+  holdStartEventName: 
+  holdEndEventName: 
+  updateHoldStateToEventTarget: 0
+  holdStateVariableName: 
   updateIsActivatedFromEventTarget: 0
   isActivatedVariableName: 
   invertIsActivatedVariable: 0
@@ -51355,6 +51431,10 @@ MonoBehaviour:
   isHide: 0
   eventTarget: {fileID: 9015973210307997977}
   triggerEventName: _ToggleAutoTrim
+  holdStartEventName: 
+  holdEndEventName: 
+  updateHoldStateToEventTarget: 0
+  holdStateVariableName: 
   updateIsActivatedFromEventTarget: 1
   isActivatedVariableName: autoTrimActive
   invertIsActivatedVariable: 0
@@ -51757,6 +51837,10 @@ MonoBehaviour:
   isHide: 0
   eventTarget: {fileID: 9015973210307997977}
   triggerEventName: _TrimUp
+  holdStartEventName: 
+  holdEndEventName: 
+  updateHoldStateToEventTarget: 1
+  holdStateVariableName: isTrimUpHold
   updateIsActivatedFromEventTarget: 0
   isActivatedVariableName: 
   invertIsActivatedVariable: 0
@@ -53790,6 +53874,10 @@ MonoBehaviour:
   isHide: 0
   eventTarget: {fileID: 8039740003811797684}
   triggerEventName: ToggleCanopy
+  holdStartEventName: 
+  holdEndEventName: 
+  updateHoldStateToEventTarget: 0
+  holdStateVariableName: 
   updateIsActivatedFromEventTarget: 1
   isActivatedVariableName: CanopyOpen
   invertIsActivatedVariable: 0
@@ -54593,6 +54681,10 @@ MonoBehaviour:
   isHide: 0
   eventTarget: {fileID: 5888512830045652000}
   triggerEventName: 
+  holdStartEventName: 
+  holdEndEventName: 
+  updateHoldStateToEventTarget: 0
+  holdStateVariableName: 
   updateIsActivatedFromEventTarget: 1
   isActivatedVariableName: isVhfRxActivated
   invertIsActivatedVariable: 0
@@ -54909,6 +55001,10 @@ MonoBehaviour:
   isHide: 0
   eventTarget: {fileID: 906793013950430918}
   triggerEventName: _IncreaseSetSpeedBy10Kt
+  holdStartEventName: 
+  holdEndEventName: 
+  updateHoldStateToEventTarget: 0
+  holdStateVariableName: 
   updateIsActivatedFromEventTarget: 0
   isActivatedVariableName: 
   invertIsActivatedVariable: 0
@@ -55004,6 +55100,10 @@ MonoBehaviour:
   isHide: 0
   eventTarget: {fileID: 1968102284611630082}
   triggerEventName: ToggleLandingLight
+  holdStartEventName: 
+  holdEndEventName: 
+  updateHoldStateToEventTarget: 0
+  holdStateVariableName: 
   updateIsActivatedFromEventTarget: 1
   isActivatedVariableName: isLandingLightOn
   invertIsActivatedVariable: 0
@@ -61571,6 +61671,10 @@ MonoBehaviour:
   isHide: 0
   eventTarget: {fileID: 0}
   triggerEventName: 
+  holdStartEventName: 
+  holdEndEventName: 
+  updateHoldStateToEventTarget: 0
+  holdStateVariableName: 
   updateIsActivatedFromEventTarget: 0
   isActivatedVariableName: 
   invertIsActivatedVariable: 0
@@ -61780,6 +61884,10 @@ MonoBehaviour:
   isHide: 0
   eventTarget: {fileID: 0}
   triggerEventName: 
+  holdStartEventName: 
+  holdEndEventName: 
+  updateHoldStateToEventTarget: 0
+  holdStateVariableName: 
   updateIsActivatedFromEventTarget: 0
   isActivatedVariableName: 
   invertIsActivatedVariable: 0
@@ -62507,6 +62615,10 @@ MonoBehaviour:
   isHide: 0
   eventTarget: {fileID: 9030965893291498146}
   triggerEventName: _ToggleParkBrake
+  holdStartEventName: 
+  holdEndEventName: 
+  updateHoldStateToEventTarget: 0
+  holdStateVariableName: 
   updateIsActivatedFromEventTarget: 1
   isActivatedVariableName: ParkBreakSet
   invertIsActivatedVariable: 0
@@ -62755,6 +62867,10 @@ MonoBehaviour:
   isHide: 0
   eventTarget: {fileID: 3181302139978249755}
   triggerEventName: 
+  holdStartEventName: 
+  holdEndEventName: 
+  updateHoldStateToEventTarget: 0
+  holdStateVariableName: 
   updateIsActivatedFromEventTarget: 0
   isActivatedVariableName: 
   invertIsActivatedVariable: 0
@@ -63704,6 +63820,10 @@ MonoBehaviour:
   isHide: 0
   eventTarget: {fileID: 3181302139978249755}
   triggerEventName: SelectAutoBrakeMax
+  holdStartEventName: 
+  holdEndEventName: 
+  updateHoldStateToEventTarget: 0
+  holdStateVariableName: 
   updateIsActivatedFromEventTarget: 1
   isActivatedVariableName: isAutoBrakeMaxSelected
   invertIsActivatedVariable: 0
@@ -86041,6 +86161,10 @@ MonoBehaviour:
   isHide: 0
   eventTarget: {fileID: 0}
   triggerEventName: 
+  holdStartEventName: 
+  holdEndEventName: 
+  updateHoldStateToEventTarget: 0
+  holdStateVariableName: 
   updateIsActivatedFromEventTarget: 0
   isActivatedVariableName: 
   invertIsActivatedVariable: 0
@@ -86136,6 +86260,10 @@ MonoBehaviour:
   isHide: 0
   eventTarget: {fileID: 906793013950430918}
   triggerEventName: _IncreaseSetSpeedBy1Kt
+  holdStartEventName: 
+  holdEndEventName: 
+  updateHoldStateToEventTarget: 0
+  holdStateVariableName: 
   updateIsActivatedFromEventTarget: 0
   isActivatedVariableName: 
   invertIsActivatedVariable: 0
@@ -91654,6 +91782,10 @@ MonoBehaviour:
   isHide: 0
   eventTarget: {fileID: 8039740003811797684}
   triggerEventName: ToggleCanopy
+  holdStartEventName: 
+  holdEndEventName: 
+  updateHoldStateToEventTarget: 0
+  holdStateVariableName: 
   updateIsActivatedFromEventTarget: 1
   isActivatedVariableName: CanopyOpen
   invertIsActivatedVariable: 0
@@ -97705,6 +97837,10 @@ MonoBehaviour:
   isHide: 0
   eventTarget: {fileID: 8397340840038700154}
   triggerEventName: ToggleGear
+  holdStartEventName: 
+  holdEndEventName: 
+  updateHoldStateToEventTarget: 0
+  holdStateVariableName: 
   updateIsActivatedFromEventTarget: 1
   isActivatedVariableName: GearUp
   invertIsActivatedVariable: 1
@@ -103352,6 +103488,10 @@ MonoBehaviour:
   isHide: 0
   eventTarget: {fileID: 0}
   triggerEventName: 
+  holdStartEventName: 
+  holdEndEventName: 
+  updateHoldStateToEventTarget: 0
+  holdStateVariableName: 
   updateIsActivatedFromEventTarget: 0
   isActivatedVariableName: 
   invertIsActivatedVariable: 0
@@ -103481,6 +103621,10 @@ MonoBehaviour:
   isHide: 0
   eventTarget: {fileID: 906793013950430918}
   triggerEventName: 
+  holdStartEventName: 
+  holdEndEventName: 
+  updateHoldStateToEventTarget: 0
+  holdStateVariableName: 
   updateIsActivatedFromEventTarget: 0
   isActivatedVariableName: Cruise
   invertIsActivatedVariable: 0
@@ -105237,6 +105381,10 @@ MonoBehaviour:
   isHide: 0
   eventTarget: {fileID: 906793013950430918}
   triggerEventName: 
+  holdStartEventName: 
+  holdEndEventName: 
+  updateHoldStateToEventTarget: 0
+  holdStateVariableName: 
   updateIsActivatedFromEventTarget: 0
   isActivatedVariableName: 
   invertIsActivatedVariable: 0
@@ -110981,6 +111129,10 @@ MonoBehaviour:
   isHide: 0
   eventTarget: {fileID: 906793013950430918}
   triggerEventName: _DecreaseSetSpeedBy10Kt
+  holdStartEventName: 
+  holdEndEventName: 
+  updateHoldStateToEventTarget: 0
+  holdStateVariableName: 
   updateIsActivatedFromEventTarget: 0
   isActivatedVariableName: 
   invertIsActivatedVariable: 0
@@ -111745,6 +111897,10 @@ MonoBehaviour:
   isHide: 0
   eventTarget: {fileID: 9030965893291498146}
   triggerEventName: _ToggleParkBrake
+  holdStartEventName: 
+  holdEndEventName: 
+  updateHoldStateToEventTarget: 0
+  holdStateVariableName: 
   updateIsActivatedFromEventTarget: 1
   isActivatedVariableName: ParkBreakSet
   invertIsActivatedVariable: 0
@@ -111840,6 +111996,10 @@ MonoBehaviour:
   isHide: 0
   eventTarget: {fileID: 9015973210307997977}
   triggerEventName: 
+  holdStartEventName: 
+  holdEndEventName: 
+  updateHoldStateToEventTarget: 0
+  holdStateVariableName: 
   updateIsActivatedFromEventTarget: 0
   isActivatedVariableName: 
   invertIsActivatedVariable: 0
@@ -111975,6 +112135,10 @@ MonoBehaviour:
   isHide: 0
   eventTarget: {fileID: 8397340840038700154}
   triggerEventName: ToggleGear
+  holdStartEventName: 
+  holdEndEventName: 
+  updateHoldStateToEventTarget: 0
+  holdStateVariableName: 
   updateIsActivatedFromEventTarget: 1
   isActivatedVariableName: GearUp
   invertIsActivatedVariable: 1
@@ -112626,6 +112790,10 @@ MonoBehaviour:
   isHide: 0
   eventTarget: {fileID: 906793013950430918}
   triggerEventName: KeyboardInput
+  holdStartEventName: 
+  holdEndEventName: 
+  updateHoldStateToEventTarget: 0
+  holdStateVariableName: 
   updateIsActivatedFromEventTarget: 0
   isActivatedVariableName: Cruise
   invertIsActivatedVariable: 0
@@ -113727,6 +113895,10 @@ MonoBehaviour:
   isHide: 0
   eventTarget: {fileID: 6455498516281820233}
   triggerEventName: 
+  holdStartEventName: 
+  holdEndEventName: 
+  updateHoldStateToEventTarget: 0
+  holdStateVariableName: 
   updateIsActivatedFromEventTarget: 0
   isActivatedVariableName: 
   invertIsActivatedVariable: 0

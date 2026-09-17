@@ -1,3 +1,5 @@
+using System;
+using JetBrains.Annotations;
 using SaccFlightAndVehicles;
 using UdonSharp;
 using UnityEngine;
@@ -21,6 +23,9 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.SaccExt
         //[Tooltip("配平强度偏置，最终的VelLift =trimStrength *x +  trimBias")]
         //[Range(0, 50)] public float trimBias = 8;
         private float prevTrim;
+
+        [NonSerialized] [PublicAPI] public bool isTrimUpHold;
+        [NonSerialized] [PublicAPI] public bool isTrimDownHold;
 
         public float initialTrim = 0.3f;
         [UdonSynced] public float trim; //当前配平位置，-1~1
@@ -80,6 +85,16 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.SaccExt
         {
             //计算配平值
             float DeltaTime = Time.deltaTime;
+
+            if (isTrimUpHold)
+            {
+                trim += desktopStep * DeltaTime * 10;
+            }
+
+            if (isTrimDownHold)
+            {
+                trim -= desktopStep * DeltaTime * 10;
+            }
 
             var pitchInputs = SAVControl.RotationInputs.x;
 
