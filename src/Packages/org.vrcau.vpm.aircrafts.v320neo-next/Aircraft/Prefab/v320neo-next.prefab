@@ -19356,7 +19356,7 @@ MonoBehaviour:
   _avionicsBus: {fileID: 0}
   adjustTargetInVr: {fileID: 7603465784415788919}
   adjustTargetInDesktop: {fileID: 8745606592310429560}
-  adjustStep: 1.5
+  adjustStep: 0.5
 --- !u!114 &5281988694487502379
 MonoBehaviour:
   m_ObjectHideFlags: 0

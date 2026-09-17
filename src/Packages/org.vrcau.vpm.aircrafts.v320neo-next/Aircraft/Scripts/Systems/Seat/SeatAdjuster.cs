@@ -13,7 +13,7 @@ namespace VAU.V320NeoNext.Runtime.Systems.Seat
         public Transform adjustTargetInVr;
         public Transform adjustTargetInDesktop;
 
-        public float adjustStep = 1.5f;
+        public float adjustStep = 0.5f;
 
         private bool _isInitialized;
 
