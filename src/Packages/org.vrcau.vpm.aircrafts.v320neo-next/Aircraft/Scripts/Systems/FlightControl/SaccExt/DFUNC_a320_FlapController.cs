@@ -229,7 +229,7 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.SaccExt {
 
         public void RequestFlapsUp()
         {
-            if (isOwner)
+            if (isOwner && leverIndex > 0)
             {
                 leverIndex = (leverIndex - 1) % flapLeverDetent;
                 OnLeverChanged();
@@ -238,7 +238,7 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.SaccExt {
 
         public void RequestFlapsDown()
         {
-            if (isOwner)
+            if (isOwner && leverIndex < flapLeverDetent - 1)
             {
                 leverIndex = (leverIndex + 1) % flapLeverDetent;
                 OnLeverChanged();
