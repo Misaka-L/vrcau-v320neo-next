@@ -53,10 +53,10 @@ namespace VAU.V320NeoNext.Runtime.Bus.Samples
 
             // 订阅必须登记到 bus 的订阅表上，这是初始化期的一次性开销
             avionicsBus._SubscribeBool((int)AvionicsBusBoolDataIds.V32NN_Infrequent_EFIS_Left_Sync_LandingSystemOn, this, nameof(BusSample_OnDataValidChanged));
-            avionicsBus._SubscribeFloat((int)AvionicsBusFloatDataIds.V32NN_Infrequent_FCU_SelectedAltitudeFeet, this, nameof(BusSample_OnSelectedAltitudeChanged));
+            avionicsBus._SubscribeFloat((int)AvionicsBusFloatDataIds.V32NN_Frequent_ADIRS_ADR_1_MachNumber, this, nameof(BusSample_OnSelectedAltitudeChanged));
 
             Debug.Log("[Bus Sample] NonClientConsumer 订阅完成，当前高度 = "
-                + _floatData[(int)AvionicsBusFloatDataIds.V32NN_Frequent_ADR_AltitudeFeet]);
+                + _floatData[(int)AvionicsBusFloatDataIds.V32NN_Frequent_ADIRS_ADR_1_AltitudeFeet]);
         }
 
         private void Update()
@@ -69,7 +69,7 @@ namespace VAU.V320NeoNext.Runtime.Bus.Samples
 
             _writeTimer = 0f;
 
-            int id = (int)AvionicsBusFloatDataIds.V32NN_Infrequent_FCU_SelectedAltitudeFeet;
+            int id = (int)AvionicsBusFloatDataIds.V32NN_Frequent_ADIRS_ADR_1_MachNumber;
 
             // 本地数组写入，零跨 vm
             _floatData[id] = 20000f + Time.time * 10f;
@@ -89,7 +89,7 @@ namespace VAU.V320NeoNext.Runtime.Bus.Samples
         public void BusSample_OnSelectedAltitudeChanged()
         {
             Debug.Log("[Bus Sample] NonClientConsumer: FCU 选定高度 = "
-                + _floatData[(int)AvionicsBusFloatDataIds.V32NN_Infrequent_FCU_SelectedAltitudeFeet]);
+                + _floatData[(int)AvionicsBusFloatDataIds.V32NN_Frequent_ADIRS_ADR_1_MachNumber]);
         }
 
         #endregion

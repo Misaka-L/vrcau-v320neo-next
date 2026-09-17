@@ -41,15 +41,15 @@ namespace VAU.V320NeoNext.Runtime.Bus.Samples
 
         protected override void _OnAvionicsBusStart()
         {
-            _SubscribeFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADR_AltitudeFeet, nameof(Sample_OnAltitudeChanged));
-            _SubscribeFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADR_IndicatedAirspeed, nameof(Sample_OnAirspeedChanged));
-            _SubscribeFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADR_VerticalSpeedFeetPerMinute, nameof(Sample_OnVerticalSpeedChanged));
+            _SubscribeFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADIRS_ADR_1_AltitudeFeet, nameof(Sample_OnAltitudeChanged));
+            _SubscribeFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADIRS_ADR_1_IndicatedAirspeed, nameof(Sample_OnAirspeedChanged));
+            _SubscribeFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADIRS_ADR_1_VerticalSpeedFeetPerMinute, nameof(Sample_OnVerticalSpeedChanged));
             _SubscribeInt(AvionicsBusIntDataIds.V32NN_Frequent_ADR_HeadingDegrees, nameof(Sample_OnHeadingChanged));
 
             // 订阅之后先全量读一次，保证首帧显示是完整的
-            _altitudeFeet = _ReadFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADR_AltitudeFeet);
-            _airspeed = _ReadFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADR_IndicatedAirspeed);
-            _verticalSpeedFeetPerMinute = _ReadFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADR_VerticalSpeedFeetPerMinute);
+            _altitudeFeet = _ReadFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADIRS_ADR_1_AltitudeFeet);
+            _airspeed = _ReadFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADIRS_ADR_1_IndicatedAirspeed);
+            _verticalSpeedFeetPerMinute = _ReadFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADIRS_ADR_1_VerticalSpeedFeetPerMinute);
             _headingDegrees = _ReadInt(AvionicsBusIntDataIds.V32NN_Frequent_ADR_HeadingDegrees);
         }
 
@@ -84,19 +84,19 @@ namespace VAU.V320NeoNext.Runtime.Bus.Samples
             if (_altitudeDirty)
             {
                 _altitudeDirty = false;
-                _altitudeFeet = _ReadFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADR_AltitudeFeet);
+                _altitudeFeet = _ReadFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADIRS_ADR_1_AltitudeFeet);
             }
 
             if (_airspeedDirty)
             {
                 _airspeedDirty = false;
-                _airspeed = _ReadFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADR_IndicatedAirspeed);
+                _airspeed = _ReadFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADIRS_ADR_1_IndicatedAirspeed);
             }
 
             if (_verticalSpeedDirty)
             {
                 _verticalSpeedDirty = false;
-                _verticalSpeedFeetPerMinute = _ReadFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADR_VerticalSpeedFeetPerMinute);
+                _verticalSpeedFeetPerMinute = _ReadFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADIRS_ADR_1_VerticalSpeedFeetPerMinute);
             }
 
             if (_headingDirty)

@@ -49,7 +49,7 @@ namespace VAU.V320NeoNext.Runtime.Bus.Samples
         {
             _pollTimer = 0f;
 
-            _indicatedAirspeed = _ReadFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADR_IndicatedAirspeed);
+            _indicatedAirspeed = _ReadFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADIRS_ADR_1_IndicatedAirspeed);
             _headingDegrees = _ReadInt(AvionicsBusIntDataIds.V32NN_Frequent_ADR_HeadingDegrees);
             _lastLoggedAirspeed = _indicatedAirspeed;
 
@@ -82,7 +82,7 @@ namespace VAU.V320NeoNext.Runtime.Bus.Samples
         private void _Poll()
         {
             // 直接读 Bus 的数组，没有额外的方法调用与事件开销
-            _indicatedAirspeed = _ReadFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADR_IndicatedAirspeed);
+            _indicatedAirspeed = _ReadFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADIRS_ADR_1_IndicatedAirspeed);
             _headingDegrees = _ReadInt(AvionicsBusIntDataIds.V32NN_Frequent_ADR_HeadingDegrees);
 
             _ApplyNeedle();

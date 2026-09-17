@@ -55,9 +55,9 @@ namespace VAU.V320NeoNext.Runtime.Bus.Samples
         protected override void _OnAvionicsBusRespawnByLocalPlayer()
         {
             // 重生：数据复位为 0，等下一帧 Update 重新填充（也可以在这里直接 _PublishFrequent 一次）
-            _WriteFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADR_AltitudeFeet, 0f);
-            _WriteFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADR_IndicatedAirspeed, 0f);
-            _WriteFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADR_VerticalSpeedFeetPerMinute, 0f);
+            _WriteFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADIRS_ADR_1_AltitudeFeet, 0f);
+            _WriteFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADIRS_ADR_1_IndicatedAirspeed, 0f);
+            _WriteFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADIRS_ADR_1_VerticalSpeedFeetPerMinute, 0f);
             _WriteVector3(AvionicsBusVector3DataIds.V32NN_Frequent_ADR_VelocityNED, Vector3.zero);
             _WriteBool(AvionicsBusBoolDataIds.V32NN_Infrequent_EFIS_Left_Sync_LandingSystemOn, false);
 
@@ -99,9 +99,9 @@ namespace VAU.V320NeoNext.Runtime.Bus.Samples
             if (_heading >= 360f) _heading -= 360f;
 
             // _WriteAndNotifyXxx = 写入 + 立刻通知该 id 的所有订阅者
-            _WriteAndNotifyFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADR_AltitudeFeet, altitude);
-            _WriteAndNotifyFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADR_IndicatedAirspeed, airspeed);
-            _WriteAndNotifyFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADR_VerticalSpeedFeetPerMinute, verticalSpeed);
+            _WriteAndNotifyFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADIRS_ADR_1_AltitudeFeet, altitude);
+            _WriteAndNotifyFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADIRS_ADR_1_IndicatedAirspeed, airspeed);
+            _WriteAndNotifyFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADIRS_ADR_1_VerticalSpeedFeetPerMinute, verticalSpeed);
             _WriteAndNotifyInt(AvionicsBusIntDataIds.V32NN_Frequent_ADR_HeadingDegrees, (int)_heading);
             _WriteAndNotifyVector3(AvionicsBusVector3DataIds.V32NN_Frequent_ADR_VelocityNED, new Vector3(airspeed * 0.514444f, verticalSpeed * 0.00508f, 0f));
             _WriteAndNotifyBool(AvionicsBusBoolDataIds.V32NN_Infrequent_EFIS_Left_Sync_LandingSystemOn, _isDataValid);
@@ -116,7 +116,7 @@ namespace VAU.V320NeoNext.Runtime.Bus.Samples
             _isAligned = Time.time >= 2f;
             _alignmentState = _isAligned ? 2 : 1;
 
-            _WriteAndNotifyFloat(AvionicsBusFloatDataIds.V32NN_Infrequent_FCU_SelectedAltitudeFeet, 30000f + step * 1000f);
+            _WriteAndNotifyFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADIRS_ADR_1_MachNumber, 30000f + step * 1000f);
             _WriteAndNotifyInt(AvionicsBusIntDataIds.V32NN_Frequent_ADIRS_AlignmentState, _alignmentState);
             _WriteAndNotifyByte(AvionicsBusByteDataIds.V32NN_Infrequent_EFIS_Left_Sync_NavigationDisplayFilter, (byte)_alignmentState);
             _WriteAndNotifyBool(AvionicsBusBoolDataIds.V32NN_Infrequent_EFIS_Left_Sync_FlightDirectorOn, _isAligned);

@@ -19,18 +19,29 @@ namespace VAU.V320NeoNext.Runtime.Bus
     /// </summary>
     public enum AvionicsBusFloatDataIds
     {
-        V32NN_Frequent_ADR_AltitudeFeet = 0,
-        V32NN_Frequent_ADR_IndicatedAirspeed = 1,
-        V32NN_Frequent_ADR_VerticalSpeedFeetPerMinute = 2,
-        V32NN_Infrequent_FCU_SelectedAltitudeFeet = 3,
-        Count = 4
+        // ATA34. Navigation / ADIRS / ADR
+        V32NN_Frequent_ADIRS_ADR_1_AltitudeFeet,
+        V32NN_Frequent_ADIRS_ADR_1_IndicatedAirspeed,
+        V32NN_Frequent_ADIRS_ADR_1_VerticalSpeedFeetPerMinute,
+        V32NN_Frequent_ADIRS_ADR_1_MachNumber,
+        V32NN_Frequent_ADIRS_ADR_1_AoA,
+        
+        // ATA34. Navigation / Radio Altimeter
+        V32NN_Frequent_RA_1_RadioAltitude,
+
+        // Avionics Bus
+        Count
     }
 
     public enum AvionicsBusIntDataIds
     {
-        V32NN_Frequent_ADR_HeadingDegrees = 0,
-        V32NN_Frequent_ADIRS_AlignmentState = 1,
-        Count = 2
+        // ATA27. Flight Control / Flaps
+        V32NN_Infrequent_Flap_LevelerPosition,
+        V32NN_Infrequent_Flap_SFCC_1_ActualFlapPosition,
+
+        V32NN_Frequent_ADR_HeadingDegrees,
+        V32NN_Frequent_ADIRS_AlignmentState,
+        Count
     }
 
     public enum AvionicsBusByteDataIds

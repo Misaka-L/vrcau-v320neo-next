@@ -11,7 +11,7 @@ namespace VAU.V320NeoNext.Runtime.Bus
     /// <para>数据 id 及其命名约定见 AvionicsBusDataIds.cs。</para>
     /// </summary>
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
-    [DefaultExecutionOrder(-100)] // before all aircraft scripts
+    [DefaultExecutionOrder(AircraftScriptsExecutionOrder.AvionicsBus)] // before all aircraft scripts
     public class AvionicsBus : UdonSharpBehaviour
     {
         #region Data holder
