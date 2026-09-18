@@ -38,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Try select flap up in desktop mode when flap already up will crash flap controller.
 - Takeoff with config 2 will trigger config warning.
 - Performance issue during A/THR activated.
 - Gust wind won't show in ND wind display.
