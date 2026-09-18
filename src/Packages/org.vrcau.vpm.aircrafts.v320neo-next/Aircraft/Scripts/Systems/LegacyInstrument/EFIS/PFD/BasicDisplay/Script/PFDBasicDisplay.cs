@@ -319,26 +319,7 @@ namespace VAU.V320NeoNext.Runtime.Systems.LegacyInstrument.EFIS.PFD.BasicDisplay
 
             #region VSW
 
-            var VSW = VSWCONF0;
-            switch (_aircraftSystemData.flapCurrentIndex)
-            {
-                case 1:
-                    VSW = VSWCONF1;
-                    break;
-                case 3:
-                    VSW = VSWCONF2;
-                    break;
-                case 4:
-                    VSW = VSWCONF3;
-                    break;
-                case 5:
-                    VSW = VSWCONFFULL;
-                    break;
-            }
-
-            //失速速度计算VS = VS1G/0.94;
-            //var VSW = _adiru.adr.Vstall;
-            //var VS1G = _adiru.adr.Vstall_1g;
+            var VSW = _ReadFloat(AvionicsBusFloatDataIds.V32NN_Frequent_FAC_1_Stall_Warning_Speed);
             IndicatorAnimator.SetFloat(VSW_HASH, VSW / 300f);
 
             #endregion

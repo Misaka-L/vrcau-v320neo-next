@@ -8,5 +8,6 @@
         // ReSharper disable once UnusedMember.Global
         public const int SaccAirVehicle = 5;
         public const int Adr = 6;
+        public const int Fac = 7;
     }
 }
