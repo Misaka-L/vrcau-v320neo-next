@@ -12,7 +12,7 @@ namespace VAU.V320NeoNext.Runtime.Systems.LegacyFws {
                  Mathf.Approximately(FWS.equipmentData.engine2ThrottleLeveler, 1f)) &&
                 FWS.equipmentData.isAircraftGrounded) {
                 SetWarnVisible(ref FLAPS_NOT_IN_TAKEOFF_CONFIG.isVisible,
-                    !(FWS.equipmentData.flapCurrentIndex == 1 || FWS.equipmentData.flapCurrentIndex == 2), true);
+                    !(FWS.equipmentData.flapCurrentIndex == 2 || FWS.equipmentData.flapCurrentIndex == 3), true);
                 SetWarnVisible(ref PARK_BRAKE_ON.isVisible, FWS.equipmentData.isParkBreakSet, true);
             }
             else {
