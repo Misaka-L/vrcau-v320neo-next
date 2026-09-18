@@ -51101,10 +51101,10 @@ MonoBehaviour:
   _avionicsBus: {fileID: 0}
   stallWarningAudioSource: {fileID: 4777374284421221856}
   flapUpAoAThreshold: 7
-  flap1AoAThreshold: 9
-  flap2AoAThreshold: 9
-  flap3AoAThreshold: 9
-  flapFullAoAThreshold: 9
+  flap1AoAThreshold: 9.5
+  flap2AoAThreshold: 9.5
+  flap3AoAThreshold: 9.5
+  flapFullAoAThreshold: 9.5
 --- !u!114 &8370355591717551099
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -71530,7 +71530,7 @@ MonoBehaviour:
   PitchThrustVecMulti: 0
   PitchFriction: 20
   PitchConstantFriction: 20
-  PitchResponse: 10
+  PitchResponse: 5
   ReversingPitchStrengthMulti: 2
   YawStrength: 0.30833334
   YawThrustVecMulti: 0
