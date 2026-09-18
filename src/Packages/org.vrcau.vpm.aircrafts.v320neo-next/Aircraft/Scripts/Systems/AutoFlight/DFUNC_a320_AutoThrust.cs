@@ -46,6 +46,9 @@ namespace VAU.V320NeoNext.Runtime.Systems.AutoFlight
         private bool func_active;
         private bool Piloting;
 
+        [NonSerialized] [PublicAPI] public bool holdIncreaseTargetSpeed;
+        [NonSerialized] [PublicAPI] public bool holdDecreaseTargetSpeed;
+
         private const float MeterToKt = 1.9438445f;
         private const float KtToMeter = 0.514444f;
         private const int MinSpeedInKt = 100;
@@ -171,8 +174,8 @@ namespace VAU.V320NeoNext.Runtime.Systems.AutoFlight
             }
 
             float DeltaTime = Time.deltaTime;
-            var isIncreaseKeyPressed = Input.GetKey(increaseSpeedKey);
-            var isDecreaseKeyPressed = Input.GetKey(decreaseSpeedKey);
+            var isIncreaseKeyPressed = holdIncreaseTargetSpeed || Input.GetKey(increaseSpeedKey);
+            var isDecreaseKeyPressed = holdDecreaseTargetSpeed || Input.GetKey(decreaseSpeedKey);
 
             if (isDecreaseKeyPressed || isIncreaseKeyPressed)
             {
