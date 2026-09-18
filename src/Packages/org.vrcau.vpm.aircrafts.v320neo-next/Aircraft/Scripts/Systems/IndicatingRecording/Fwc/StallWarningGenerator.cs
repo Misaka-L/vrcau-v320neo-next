@@ -14,10 +14,10 @@ namespace VAU.V320NeoNext.Runtime.Systems.IndicatingRecording.Fwc
         public AudioSource stallWarningAudioSource;
 
         public float flapUpAoAThreshold = 7f;
-        public float flap1AoAThreshold = 9f;
-        public float flap2AoAThreshold = 9f;
-        public float flap3AoAThreshold = 9f;
-        public float flapFullAoAThreshold = 9f;
+        public float flap1AoAThreshold = 9.5f;
+        public float flap2AoAThreshold = 9.5f;
+        public float flap3AoAThreshold = 9.5f;
+        public float flapFullAoAThreshold = 9.5f;
 
         private float _currentStallWarningAoAThreshold;
 
