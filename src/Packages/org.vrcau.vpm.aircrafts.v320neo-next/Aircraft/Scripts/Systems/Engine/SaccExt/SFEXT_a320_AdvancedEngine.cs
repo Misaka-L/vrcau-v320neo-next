@@ -297,6 +297,7 @@ namespace VAU.V320NeoNext.Runtime.Systems.Engine.SaccExt {
         private Rigidbody vehicleRigidbody;
         //private bool hasWheelCollider;
         private Animator vehicleAnimator;
+        public Animator reverserAnimator;
         private string gripAxis;
 
 
@@ -594,6 +595,10 @@ namespace VAU.V320NeoNext.Runtime.Systems.Engine.SaccExt {
                 vehicleAnimator.SetFloat("throttleleveler", throttleLeveler);
             }
 
+            if (reverserAnimator)
+            {
+                reverserAnimator.SetFloat("reverser", reverserPosition);
+            }
         }
 
         #endregion
