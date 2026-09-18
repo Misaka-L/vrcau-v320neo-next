@@ -5,12 +5,9 @@ using VAU.V320NeoNext.Runtime.Bus;
 namespace VAU.V320NeoNext.Runtime.Systems.Navigation.Adirs
 {
     [DefaultExecutionOrder(AircraftScriptsExecutionOrder.Adr)]
-    public sealed class Adr : AbstractAvionicsBusClient
+    public sealed class AdirsComputer : AbstractAvionicsBusClient
     {
         public SaccAirVehicle airVehicle;
-
-        // Do nothing for now
-        [Range(1, 3)] public int adiruIndex = 1;
 
         private AvionicsBusFloatDataIds _altitudeId;
         private AvionicsBusFloatDataIds _indicatedAirspeedId;
@@ -18,8 +15,7 @@ namespace VAU.V320NeoNext.Runtime.Systems.Navigation.Adirs
         private AvionicsBusFloatDataIds _machNumberId;
         private AvionicsBusFloatDataIds _aoaId;
 
-        private const float FeetPerMeter = 3.28084f;
-        private const float MetersPerSecondToKnots = 1.94384f;
+        private AvionicsBusFloatDataIds _verticalGLoadId;
 
         private Transform _saccEntityTransform;
 
@@ -30,6 +26,8 @@ namespace VAU.V320NeoNext.Runtime.Systems.Navigation.Adirs
             _verticalSpeedId = AvionicsBusFloatDataIds.V32NN_Frequent_ADIRS_ADR_1_VerticalSpeedFeetPerMinute;
             _machNumberId = AvionicsBusFloatDataIds.V32NN_Frequent_ADIRS_ADR_1_MachNumber;
             _aoaId = AvionicsBusFloatDataIds.V32NN_Frequent_ADIRS_ADR_1_AoA;
+
+            _verticalGLoadId = AvionicsBusFloatDataIds.V32NN_Frequent_ADIRS_IR_1_Vertical_G_Load;
 
             _saccEntityTransform = airVehicle.EntityControl.transform;
         }
@@ -42,9 +40,9 @@ namespace VAU.V320NeoNext.Runtime.Systems.Navigation.Adirs
             var altitudeInMeter = entityPositionY - airVehicle.SeaLevel;
             var airSpeedInMeter = airVehicle.AirSpeed;
 
-            _WriteFloat(_altitudeId, altitudeInMeter * FeetPerMeter);
-            _WriteFloat(_indicatedAirspeedId, airSpeedInMeter * MetersPerSecondToKnots);
-            _WriteFloat(_verticalSpeedId, airVehicleVelocity.y * 60f * FeetPerMeter);
+            _WriteFloat(_altitudeId, altitudeInMeter * UnitConverterUtils.FeetPerMeter);
+            _WriteFloat(_indicatedAirspeedId, airSpeedInMeter * UnitConverterUtils.MetersPerSecondToKnots);
+            _WriteFloat(_verticalSpeedId, airVehicleVelocity.y * 60f * UnitConverterUtils.FeetPerMeter);
             _WriteFloat(_aoaId, airVehicle.AngleOfAttackPitch);
 
             if (altitudeInMeter < 11000)
@@ -56,6 +54,8 @@ namespace VAU.V320NeoNext.Runtime.Systems.Navigation.Adirs
             {
                 _WriteFloat(_machNumberId, airSpeedInMeter * 295f);
             }
+
+            _WriteFloat(_verticalGLoadId, airVehicle.VertGs);
         }
     }
 }
