@@ -38,7 +38,7 @@ namespace VAU.V320NeoNext.Runtime.Systems.Navigation.Adirs
             var airVehicleVelocity = airVehicle.CurrentVel;
 
             var altitudeInMeter = entityPositionY - airVehicle.SeaLevel;
-            var airSpeedInMeter = airVehicle.AirSpeed;
+            var airSpeedInMeter = _ReadFloat(AvionicsBusFloatDataIds.Sim_Frequent_IndicatedAirSpeedInMeter);
 
             _WriteFloat(_altitudeId, altitudeInMeter * UnitConverterUtils.FeetPerMeter);
             _WriteFloat(_indicatedAirspeedId, airSpeedInMeter * UnitConverterUtils.MetersPerSecondToKnots);

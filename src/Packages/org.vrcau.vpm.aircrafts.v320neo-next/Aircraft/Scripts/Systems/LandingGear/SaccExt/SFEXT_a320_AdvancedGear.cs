@@ -2,6 +2,7 @@ using System;
 using SaccFlightAndVehicles;
 using UdonSharp;
 using UnityEngine;
+using VAU.V320NeoNext.Runtime.Bus;
 using VAU.V320NeoNext.Runtime.Systems.LegacyFlightDataProvider;
 using VRC.SDKBase;
 using Random = UnityEngine.Random;
@@ -12,7 +13,7 @@ using Random = UnityEngine.Random;
 namespace VAU.V320NeoNext.Runtime.Systems.LandingGear.SaccExt {
     [UdonBehaviourSyncMode(BehaviourSyncMode.Continuous)]
     [DefaultExecutionOrder(160)]//after electrical bus
-    public class SFEXT_a320_AdvancedGear : UdonSharpBehaviour {
+    public class SFEXT_a320_AdvancedGear : AbstractAvionicsBusClient {
         public WheelCollider wheelCollider;
         public Transform suspensionTransform;
         public Transform steerTransform;
@@ -93,8 +94,6 @@ namespace VAU.V320NeoNext.Runtime.Systems.LandingGear.SaccExt {
         #region SFEXT Core
         
         private SaccAirVehicle airVehicle;
-        public DFUNC_a320_Brake brakeFunction;
-
         
         private bool hasPilot, isOwner;
         private bool initialized;
@@ -323,11 +322,13 @@ namespace VAU.V320NeoNext.Runtime.Systems.LandingGear.SaccExt {
         }
 
         private float GetTargetBrakeStrength(float groundSpeed) {
-            if (Mathf.Approximately(position, 0.0f) || brakeFunction.ParkBreakSet) return 1.0f;
-            if (!brakeFunction ||
-                ((autoLimitGroundSpeed || (!Networking.LocalPlayer.IsUserInVR() && autoLimitGroundSpeedOnDesktop)) &&
+            var isParkBrakeSet = _ReadBool(AvionicsBusBoolDataIds.V32NN_Infrequent_Brake_Sync_ParkBrakeSet);
+
+            if (Mathf.Approximately(position, 0.0f) || isParkBrakeSet) return 1.0f;
+            if (((autoLimitGroundSpeed || (!Networking.LocalPlayer.IsUserInVR() && autoLimitGroundSpeedOnDesktop)) &&
                  groundSpeed >= brakeMaxGroundSpeed)) return 0;
-            return brakeFunction.BrakeInput;
+
+            return _ReadFloat(AvionicsBusFloatDataIds.V32NN_Frequent_Brake_FinalBrakeInput);
         }
 
     #region Math Utilities

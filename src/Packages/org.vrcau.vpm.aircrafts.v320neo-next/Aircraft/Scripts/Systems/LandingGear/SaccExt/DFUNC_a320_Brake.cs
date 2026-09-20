@@ -1,43 +1,27 @@
-﻿using System;
-using JetBrains.Annotations;
+﻿using JetBrains.Annotations;
 using SaccFlightAndVehicles;
 using UdonSharp;
 using UnityEngine;
-using VAU.V320NeoNext.Runtime.Systems.LegacyFlightDataProvider;
+using VAU.V320NeoNext.Runtime.Bus;
 using VRC.SDKBase;
 using VRC.Udon.Common.Interfaces;
 
-namespace VAU.V320NeoNext.Runtime.Systems.LandingGear.SaccExt {
-    [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
-    [DefaultExecutionOrder(2010)]//after AircraftSystemData
-    public class DFUNC_a320_Brake : UdonSharpBehaviour {
-        /*320专用的刹车，增加了地面摩擦阻力,停留刹车*/
-        public YFI_FlightDataInterface basicFilghtData;
-        public AircraftSystemData aircraftSystemData;
-        
-        public float autoBrakeInput;
-        public bool isManuelBrakeInUse { get; private set; }
-
+namespace VAU.V320NeoNext.Runtime.Systems.LandingGear.SaccExt
+{
+    [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
+    public class DFUNC_a320_Brake : AbstractAvionicsBusClient
+    {
         [Tooltip("Looping sound to play while brake is active")]
         public AudioSource Airbrake_snd;
 
-        [Tooltip("Will Crash if not set")]
-        public Animator BrakeAnimator;
+        [Tooltip("Will Crash if not set")] public Animator BrakeAnimator;
 
-        [Tooltip(
-            "Because you have to hold the break, and the keyboardcontrols script can only send events, this option is here.")]
-        public KeyCode KeyboardControl = KeyCode.B;
-
-        public KeyCode ParkBreakControl = KeyCode.P;
-        [UdonSynced] public bool ParkBreakSet = true;
         public float AirbrakeStrength = 4f;
 
         public bool NoPilotAlwaysParkBrake = true;
 
         private float AirbrakeLerper;
         private int BRAKE_STRING = Animator.StringToHash("brake");
-        [NonSerialized] [UdonSynced] public float BrakeInput;
-        [NonSerialized] public bool _DisableGroundBrake;
         private float BrakeStrength;
 
         private bool Braking;
@@ -46,210 +30,148 @@ namespace VAU.V320NeoNext.Runtime.Systems.LandingGear.SaccExt {
         private SaccEntity EntityControl;
         public SaccAirVehicle SAVControl;
         private bool HasAirBrake;
-        private bool IsOwner;
         private float LastDrag;
         private float NextUpdateTime;
 
-        private float NonLocalActiveDelay; //this var is for adding a min delay for disabling for non-local users to account for lag
+        private float
+            NonLocalActiveDelay; //this var is for adding a min delay for disabling for non-local users to account for lag
 
-        private bool prevKeyPress;
-        private bool prevTriggered;
         private float RotMultiMaxSpeedDivider;
-        private bool Selected;
-        private float triggerTapTime = 1;
 
-        private bool UseLeftTrigger;
-        private Rigidbody VehicleRigidbody;
+        private const AvionicsBusBoolDataIds ParkBrakeSetId =
+            AvionicsBusBoolDataIds.V32NN_Infrequent_Brake_Sync_ParkBrakeSet;
 
-        private void Update() {
-            var DeltaTime = Time.deltaTime;
-            if (IsOwner) {
-                triggerTapTime += Time.deltaTime;
-                var Speed = basicFilghtData.groundSpeed;
-                var CurrentVel = basicFilghtData.currentVelocity;
+        private const AvionicsBusFloatDataIds BrakePedalInputId =
+            AvionicsBusFloatDataIds.V32NN_Frequent_Brake_Sync_PedalInput;
 
-                var Taxiing = SAVControl.Taxiing;
-                if (SAVControl.Piloting) {
-                    float KeyboardBrakeInput = 0;
-                    float VRBrakeInput = 0;
+        private const AvionicsBusFloatDataIds AutoBrakeInputId =
+            AvionicsBusFloatDataIds.V32NN_Frequent_Brake_Sync_AutoBrakeInput;
 
-                    if (Selected) {
-                        float Trigger;
-                        if (UseLeftTrigger)
-                            Trigger = Input.GetAxisRaw("Oculus_CrossPlatform_PrimaryIndexTrigger");
-                        else
-                            Trigger = Input.GetAxisRaw("Oculus_CrossPlatform_SecondaryIndexTrigger");
-                        VRBrakeInput = Trigger;
-                        if (Trigger > 0.75f) {
-                            if (!prevTriggered) {
-                                if (triggerTapTime > .4f) //no double tap
-                                {
-                                    triggerTapTime = 0;
-                                }
-                                else //double tap detected, switch break
-                                {
-                                    _ToggleParkBrake();
-                                    triggerTapTime = 1;
-                                }
-                            }
+        private const AvionicsBusFloatDataIds FinalBrakeInput =
+            AvionicsBusFloatDataIds.V32NN_Frequent_Brake_FinalBrakeInput;
 
-                            prevTriggered = true;
-                        }
-                        else {
-                            prevTriggered = false;
-                        }
-                        //VR双击启动地面刹车
-                    } //获取轴输入
+        protected override void _OnAvionicsBusStart()
+        {
+            _WriteAndNotifyBool(ParkBrakeSetId, true);
 
-                    if (Input.GetKey(KeyboardControl)) KeyboardBrakeInput = 1; //获取键盘输入
-                    if (Input.GetKey(ParkBreakControl)) {
-                        if (!prevKeyPress) {
-                            _ToggleParkBrake();
-                            prevKeyPress = true;
-                        }
-                    } //生成parkbreak开关或brakeinput
-                    else {
-                        prevKeyPress = false;
-                    }
+            HasAirBrake = AirbrakeStrength != 0;
+            RotMultiMaxSpeedDivider = 1 / SAVControl.RotMultiMaxSpeed;
 
-                    BrakeInput = Mathf.Max(VRBrakeInput, KeyboardBrakeInput);
-                    isManuelBrakeInUse = BrakeInput > 0;
+            var localPlayer = Networking.LocalPlayer;
+            if (!localPlayer.isMaster)
+                gameObject.SetActive(false);
+            else
+            {
+                gameObject.SetActive(true);
+            }
+        }
 
-                    if (BrakeInput < autoBrakeInput) {
-                        BrakeInput = autoBrakeInput;
-                    }
+        protected override void _OnAvionicsBusRespawnByLocalPlayer()
+        {
+            _WriteFloat(BrakePedalInputId, 0);
+            _WriteFloat(AutoBrakeInputId, 0);
+            _WriteFloat(FinalBrakeInput, 0);
+        }
 
-                    if (!HasAirBrake && !Taxiing) BrakeInput = 0;
+        private void Update()
+        {
+            var deltaTime = Time.deltaTime;
+
+            var pedalInput = _ReadFloat(BrakePedalInputId);
+            var autoBrakeInput = _ReadFloat(AutoBrakeInputId);
+            var brakeInput = Mathf.Max(pedalInput, autoBrakeInput);
+            _WriteFloat(FinalBrakeInput, brakeInput);
+
+            if (SAVControl.IsOwner)
+            {
+                if (SAVControl.Piloting)
+                {
+                    var isAircraftGrounded = SAVControl.Taxiing;
+
+                    if (!HasAirBrake && !isAircraftGrounded) brakeInput = 0;
                     //remove the drag added last frame to add the new value for this frame
                     var extradrag = SAVControl.ExtraDrag;
-                    var newdrag = AirbrakeStrength * BrakeInput;
+                    var newdrag = AirbrakeStrength * brakeInput;
                     var dragtoadd = -LastDrag + newdrag;
                     extradrag += dragtoadd;
                     LastDrag = newdrag;
                     SAVControl.ExtraDrag = extradrag;
 
                     //send events to other users to tell them to enable the script so they can see the animation
-                    Braking = BrakeInput > .02f;
-                    if (Braking) {
-                        if (!BrakingLastFrame) {
+                    Braking = brakeInput > .02f;
+                    if (Braking)
+                    {
+                        if (!BrakingLastFrame)
+                        {
                             if (Airbrake_snd && !Airbrake_snd.isPlaying) Airbrake_snd.Play();
-                            SendCustomNetworkEvent(NetworkEventTarget.All, nameof(EnableForAnimation));
+                            SendCustomNetworkEvent(NetworkEventTarget.Others, nameof(EnableForAnimation));
                         }
 
-                        if (Time.time > NextUpdateTime) {
-                            RequestSerialization();
+                        if (Time.time > NextUpdateTime)
+                        {
                             NextUpdateTime = Time.time + .4f;
                         }
                     }
-                    else {
-                        if (BrakingLastFrame) {
-                            var brk = BrakeInput;
-                            BrakeInput = 0;
-                            RequestSerialization();
-                            BrakeInput = brk;
-                        }
-                    }
 
-                    if (AirbrakeLerper < .03 && BrakeInput < .03)
+                    if (AirbrakeLerper < .03 && brakeInput < .03)
                         if (Airbrake_snd && Airbrake_snd.isPlaying)
                             Airbrake_snd.Stop();
                     BrakingLastFrame = Braking;
-
                 }
-            }  
-            else {
+            }
+            else
+            {
                 //this object is enabled for non-owners only while animating
-                NonLocalActiveDelay -= DeltaTime;
-                if (NonLocalActiveDelay < 0 && AirbrakeLerper < 0.01) {
+                NonLocalActiveDelay -= deltaTime;
+                if (NonLocalActiveDelay < 0 && AirbrakeLerper < 0.01)
+                {
                     DisableForAnimation();
                     return;
                 }
             }
 
-            AirbrakeLerper = Mathf.Lerp(AirbrakeLerper, BrakeInput, 2f * DeltaTime);
+            AirbrakeLerper = Mathf.Lerp(AirbrakeLerper, brakeInput, 2f * deltaTime);
             BrakeAnimator.SetFloat(BRAKE_STRING, AirbrakeLerper);
-            if (Airbrake_snd) {
+            if (Airbrake_snd)
+            {
+                var ias = _ReadFloat(AvionicsBusFloatDataIds.Sim_Frequent_IndicatedAirSpeedInMeter)
+                          / UnitConverterUtils.MetersPerSecondToKnots;
                 Airbrake_snd.pitch = AirbrakeLerper * .2f + .9f;
-                Airbrake_snd.volume = AirbrakeLerper *
-                                      Mathf.Min((float)SAVControl.GetProgramVariable("Speed") * RotMultiMaxSpeedDivider,
-                                          1);
+                Airbrake_snd.volume = AirbrakeLerper * Mathf.Min(ias * RotMultiMaxSpeedDivider, 1);
             }
         }
 
-        public void DFUNC_LeftDial() {
-            UseLeftTrigger = true;
-        }
-
-        public void DFUNC_RightDial() {
-            UseLeftTrigger = false;
-        }
-
-        public void SFEXT_L_EntityStart() {
-
-            SAVControl = basicFilghtData.SAVControl;
-            VehicleRigidbody = SAVControl.VehicleRigidbody;
-            HasAirBrake = AirbrakeStrength != 0;
-            RotMultiMaxSpeedDivider = 1 / (float)SAVControl.GetProgramVariable("RotMultiMaxSpeed");
-            IsOwner = SAVControl.IsOwner;
-            var localPlayer = Networking.LocalPlayer;
-            if (localPlayer != null && !localPlayer.isMaster)
-                gameObject.SetActive(false);
-            else
-                gameObject.SetActive(true);
-        }
-
-        public void DFUNC_Selected() {
-            Selected = true;
-            prevTriggered = false;
-            prevKeyPress = false;
-        }
-
-        public void DFUNC_Deselected() {
-            BrakeInput = 0;
-            Selected = false;
-        }
-
-        public void SFEXT_O_PilotEnter() {
-            prevTriggered = false;
-            prevKeyPress = false;
-            RequestSerialization();
-        }
-
-        public void SFEXT_O_PilotExit() {
-            BrakeInput = 0;
-            Selected = false;
-            if (NoPilotAlwaysParkBrake) ParkBreakSet = true;
-            RequestSerialization();
-        }
-
-        public void SFEXT_G_Explode() {
-            BrakeInput = 0;
-            BrakeAnimator.SetFloat(BRAKE_STRING, 0);
-        }
-
-        public void SFEXT_O_TakeOwnership() {
+        public void SFEXT_O_TakeOwnership()
+        {
             gameObject.SetActive(true);
-            IsOwner = true;
         }
 
-        public void SFEXT_O_LoseOwnership() {
+        public void SFEXT_O_LoseOwnership()
+        {
             gameObject.SetActive(false);
-            IsOwner = false;
         }
 
-        public void EnableForAnimation() {
-            if (!IsOwner) {
-                if (Airbrake_snd) Airbrake_snd.Play();
-                gameObject.SetActive(true);
-                NonLocalActiveDelay = 3;
-            }
+        public void SFEXT_O_PilotExit()
+        {
+            _WriteFloat(BrakePedalInputId, 0);
+            _WriteFloat(AutoBrakeInputId, 0);
+            _WriteFloat(FinalBrakeInput, 0);
+            if (NoPilotAlwaysParkBrake) _WriteAndNotifyBool(ParkBrakeSetId, true);
         }
 
-        public void DisableForAnimation() {
+        public void EnableForAnimation()
+        {
+            if (Airbrake_snd) Airbrake_snd.Play();
+            gameObject.SetActive(true);
+            NonLocalActiveDelay = 3;
+        }
+
+        public void DisableForAnimation()
+        {
             BrakeAnimator.SetFloat(BRAKE_STRING, 0);
-            BrakeInput = 0;
             AirbrakeLerper = 0;
-            if (Airbrake_snd) {
+            if (Airbrake_snd)
+            {
                 Airbrake_snd.pitch = 0;
                 Airbrake_snd.volume = 0;
             }
@@ -257,17 +179,11 @@ namespace VAU.V320NeoNext.Runtime.Systems.LandingGear.SaccExt {
             gameObject.SetActive(false);
         }
 
-        public void SFEXT_G_TouchDownWater() {
-        }
-
-        public void SFEXT_G_TouchDown() {
-        }
-
         [PublicAPI]
-        public void _ToggleParkBrake() {
-            if (!IsOwner) return;
-            ParkBreakSet = !ParkBreakSet;
-            RequestSerialization();
+        public void _ToggleParkBrake()
+        {
+            var isParkBrakeSet = _ReadBool(ParkBrakeSetId);
+            _WriteAndNotifyBool(ParkBrakeSetId, !isParkBrakeSet);
         }
     }
 }

@@ -3,6 +3,7 @@ using JetBrains.Annotations;
 using SaccFlightAndVehicles;
 using UdonSharp;
 using UnityEngine;
+using VAU.V320NeoNext.Runtime.Bus;
 using VAU.V320NeoNext.Runtime.Systems.LandingGear.SaccExt;
 using VAU.V320NeoNext.Runtime.Systems.LegacyFlightDataProvider;
 using VAU.V320NeoNext.Runtime.Systems.LegacyFlightDataProvider.LegacyADRIRU;
@@ -10,7 +11,7 @@ using VAU.V320NeoNext.Runtime.Systems.LegacyFlightDataProvider.LegacyADRIRU;
 namespace VAU.V320NeoNext.Runtime.Systems.LegacyAutoBrake
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
-    public class AutoBrake : UdonSharpBehaviour
+    public class AutoBrake : AbstractAvionicsBusClient
     {
         public Animator indicatorAnimator;
 
@@ -191,21 +192,22 @@ namespace VAU.V320NeoNext.Runtime.Systems.LegacyAutoBrake
                     brakeInput = Kp * error + Ki * _integral + Kd * derivative;
 
                     _previousError = error;
-
-                    Debug.Log($"{decelerationRate} | {error} | {brake.autoBrakeInput}");
                 }
 
-                brake.autoBrakeInput = Mathf.Clamp(brakeInput, 0f, 1f);
+                _WriteFloat(
+                    AvionicsBusFloatDataIds.V32NN_Frequent_Brake_Sync_AutoBrakeInput,
+                    Mathf.Clamp(brakeInput, 0f, 1f)); 
             }
             else
             {
-                brake.autoBrakeInput = 0;
+                _WriteFloat(AvionicsBusFloatDataIds.V32NN_Frequent_Brake_Sync_AutoBrakeInput, 0);
             }
         }
 
         private void UpdateAutoBrakeActive()
         {
-            if (isAutoBrakeActive && brake.isManuelBrakeInUse)
+            if (isAutoBrakeActive && 
+                _ReadFloat(AvionicsBusFloatDataIds.V32NN_Frequent_Brake_Sync_PedalInput) > 0.1f)
             {
                 isAutoBrakeActive = false;
                 currentAutoBrakeMode = AutoBrakeMode.None;
