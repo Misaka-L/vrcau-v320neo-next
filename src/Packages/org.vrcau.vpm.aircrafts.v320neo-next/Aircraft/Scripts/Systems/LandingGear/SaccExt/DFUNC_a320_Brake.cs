@@ -1,5 +1,4 @@
-﻿using JetBrains.Annotations;
-using SaccFlightAndVehicles;
+﻿using SaccFlightAndVehicles;
 using UdonSharp;
 using UnityEngine;
 using VAU.V320NeoNext.Runtime.Bus;
@@ -177,13 +176,6 @@ namespace VAU.V320NeoNext.Runtime.Systems.LandingGear.SaccExt
             }
 
             gameObject.SetActive(false);
-        }
-
-        [PublicAPI]
-        public void _ToggleParkBrake()
-        {
-            var isParkBrakeSet = _ReadBool(ParkBrakeSetId);
-            _WriteAndNotifyBool(ParkBrakeSetId, !isParkBrakeSet);
         }
     }
 }
