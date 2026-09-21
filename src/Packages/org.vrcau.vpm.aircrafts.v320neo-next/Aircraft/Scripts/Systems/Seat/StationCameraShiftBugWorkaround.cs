@@ -27,7 +27,7 @@ namespace VAU.V320NeoNext.Runtime.Systems.Seat
         private bool _activated;
 
         // Init in Start();
-        private VRCCameraSettings _screenCameraSettings;
+        private VRCPlayerApi _localPlayer;
         private Vector3 _enterPositionInitialLocalPosition;
         private Transform _enterPositionParentTransform;
 
@@ -35,7 +35,7 @@ namespace VAU.V320NeoNext.Runtime.Systems.Seat
         {
             _enterPositionInitialLocalPosition = stationEnterPositionToAdjust.localPosition;
             _enterPositionParentTransform = stationEnterPositionToAdjust.parent;
-            _screenCameraSettings = VRCCameraSettings.ScreenCamera;
+            _localPlayer = Networking.LocalPlayer;
         }
 
         private float _lastUpdateTime;
@@ -60,7 +60,9 @@ namespace VAU.V320NeoNext.Runtime.Systems.Seat
 
             if (!_activated) return;
 
-            var worldOffset = targetEyePosition.position - _screenCameraSettings.Position;
+            var headPosition = _localPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.Head).position;
+
+            var worldOffset = targetEyePosition.position - headPosition;
             var offset = _enterPositionParentTransform.InverseTransformVector(worldOffset);
 
             var enterPosition = stationEnterPositionToAdjust.localPosition;
@@ -69,7 +71,7 @@ namespace VAU.V320NeoNext.Runtime.Systems.Seat
 
             if (debugMode)
             {
-                var cameraPos = _screenCameraSettings.Position;
+                var cameraPos = headPosition;
                 Debug.Log($"[{nameof(StationCameraShiftBugWorkaround)}]" +
                           $"Time:{Time.time}|DeltaTime:{Time.deltaTime}|" +
                           $"SeatWorldRotation:{stationEnterPositionToAdjust.rotation}|SeatWorldPosition:{stationEnterPositionToAdjust.position}|" +
