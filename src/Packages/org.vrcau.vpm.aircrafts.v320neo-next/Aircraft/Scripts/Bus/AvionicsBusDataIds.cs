@@ -96,6 +96,8 @@ namespace VAU.V320NeoNext.Runtime.Bus
         V32NN_Infrequent_EFIS_Right_Sync_FlightDirectorOn,
         V32NN_Infrequent_EFIS_Right_Sync_LandingSystemOn,
 
+        // ATA32. Landing Gear
+        V32NN_Infrequent_LandingGear_Sync_GearLeverUp,
         // ATA32. Landing Gear / Brake
         V32NN_Infrequent_Brake_Sync_ParkBrakeSet,
 

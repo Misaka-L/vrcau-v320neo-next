@@ -119,6 +119,19 @@ namespace VAU.V320NeoNext.Runtime.Systems.LandingGear.SaccExt {
             ResetStatus();
         }
 
+        protected override void _OnAvionicsBusStart()
+        {
+            _SubscribeBool(AvionicsBusBoolDataIds.V32NN_Infrequent_LandingGear_Sync_GearLeverUp, nameof(_OnGearLeverUpChanged));
+        }
+
+        public void _OnGearLeverUpChanged()
+        {
+            var gearUp = _ReadBool(AvionicsBusBoolDataIds.V32NN_Infrequent_LandingGear_Sync_GearLeverUp);
+            vehicleAnimator.SetBool("gearup", gearUp);
+            targetPosition = gearUp ? 0 : 1;
+            if (!gameObject.activeInHierarchy) vehicleAnimator.SetFloat(gearPositionParameterName, targetPosition);
+        }
+
         public void SFEXT_O_PilotEnter() {
             isOwner = true;
         }
@@ -146,16 +159,6 @@ namespace VAU.V320NeoNext.Runtime.Systems.LandingGear.SaccExt {
 
         public void SFEXT_G_RespawnButton() {
             ResetStatus();
-        }
-
-        public void SFEXT_G_GearUp() {
-            targetPosition = 0;
-            if (!gameObject.activeInHierarchy) vehicleAnimator.SetFloat(gearPositionParameterName, targetPosition);
-        }
-
-        public void SFEXT_G_GearDown() {
-            targetPosition = 1;
-            if (!gameObject.activeInHierarchy) vehicleAnimator.SetFloat(gearPositionParameterName, targetPosition);
         }
 
         public void SFEXT_G_TouchDown() { 
