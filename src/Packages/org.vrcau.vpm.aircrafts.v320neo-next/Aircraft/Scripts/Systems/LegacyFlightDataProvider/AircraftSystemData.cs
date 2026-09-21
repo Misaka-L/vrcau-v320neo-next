@@ -2,6 +2,7 @@
 using SaccFlightAndVehicles;
 using UdonSharp;
 using UnityEngine;
+using VAU.V320NeoNext.Runtime.Bus;
 using VAU.V320NeoNext.Runtime.Systems.AuxiliaryPowerUnit;
 using VAU.V320NeoNext.Runtime.Systems.Engine.SaccExt;
 using VAU.V320NeoNext.Runtime.Systems.FlightControl.SaccExt;
@@ -11,7 +12,7 @@ namespace VAU.V320NeoNext.Runtime.Systems.LegacyFlightDataProvider {
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     
     [DefaultExecutionOrder(2000)]
-    public class AircraftSystemData : UdonSharpBehaviour {
+    public class AircraftSystemData : AbstractAvionicsBusClient {
         /*
          写作AircraftSystemData，但是接下来所有设备的参数建议都放在这并且从这里访问，例如发动机是否启动，是否起火，起落架状态
         尽量以最少的网络同步量与Update把所有需要的extension参数同步地整到手，特别是ESFA里面的私有成员
@@ -27,7 +28,6 @@ namespace VAU.V320NeoNext.Runtime.Systems.LegacyFlightDataProvider {
 
         public DependenciesInjector _dependenciesInjector;
         public SFEXT_AuxiliaryPowerUnit APU;
-        public DFUNC_a320_Brake Brake;
 
         public DFUNC_Canopy Canopy;
         public SFEXT_a320_AdvancedGear CenterLandingGear;
@@ -56,16 +56,13 @@ namespace VAU.V320NeoNext.Runtime.Systems.LegacyFlightDataProvider {
             RightLandingGear = _dependenciesInjector.rightLadingGear;
             CenterLandingGear = _dependenciesInjector.frontLadingGear;
 
-            Brake = _dependenciesInjector.brake;
-
             Canopy = _dependenciesInjector.canopy;
-
-            
         }
 
 
         [PublicAPI] public bool isCabinDoorOpen => Canopy.CanopyOpen;
-        [PublicAPI] public bool isParkBreakSet => Brake.ParkBreakSet;
+        [PublicAPI] public bool isParkBreakSet => 
+            _ReadBool(AvionicsBusBoolDataIds.V32NN_Infrequent_Brake_Sync_ParkBrakeSet);
 
         [PublicAPI] public bool isApuStarted =>
             Mathf.Approximately(APU.apuAudioSource.volume, 1.0f);
@@ -230,7 +227,8 @@ namespace VAU.V320NeoNext.Runtime.Systems.LegacyFlightDataProvider {
         [PublicAPI] public float engine1fuelFlow => Mathf.Round(EngineL.ff / 20) * 20;
 
         [PublicAPI] public bool isEngine1Starting => EngineL.starter;
-        [PublicAPI] public bool isEngine1Reversing => EngineL.reversing; //判断反推：reversing
+        [PublicAPI] public bool isEngine1Reversing =>
+            _ReadBool(AvionicsBusBoolDataIds.V32NN_Infrequent_Engine_Engine_1_Sync_ReverserLeverOn); //判断反推：reversing
         [PublicAPI] public float engine1ThrottleLeveler => EngineL.throttleLeveler;
 
         [PublicAPI] public bool isEngine1ThrottleLevelerIdle =>
@@ -260,7 +258,8 @@ namespace VAU.V320NeoNext.Runtime.Systems.LegacyFlightDataProvider {
         [PublicAPI] public float engine2fuelFlow => Mathf.Round(EngineR.ff / 20) * 20;
 
         [PublicAPI] public bool isEngine2Starting => EngineR.starter;
-        [PublicAPI] public bool isEngine2Reversing => EngineR.reversing; //判断反推：reversing
+        [PublicAPI] public bool isEngine2Reversing =>
+            _ReadBool(AvionicsBusBoolDataIds.V32NN_Infrequent_Engine_Engine_2_Sync_ReverserLeverOn); //判断反推：reversing
         [PublicAPI] public float engine2ThrottleLeveler => EngineR.throttleLeveler;
 
         [PublicAPI] public bool isEngine2ThrottleLevelerIdle =>

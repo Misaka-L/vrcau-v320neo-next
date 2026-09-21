@@ -19,8 +19,15 @@ namespace VAU.V320NeoNext.Runtime.Bus
     /// </summary>
     public enum AvionicsBusFloatDataIds
     {
+        Sim_Frequent_IndicatedAirSpeedInMeter,
+
         // ATA22_40. Auto Flight / Flight Augmentation / FAC
         V32NN_Frequent_FAC_1_Stall_Warning_Speed,
+
+        // ATA32. Landing Gear / Brake
+        V32NN_Frequent_Brake_Sync_PedalInput,
+        V32NN_Frequent_Brake_Sync_AutoBrakeInput,
+        V32NN_Frequent_Brake_FinalBrakeInput,
 
         // ATA34. Navigation / ADIRS / ADR
         V32NN_Frequent_ADIRS_ADR_1_AltitudeFeet,
@@ -34,12 +41,18 @@ namespace VAU.V320NeoNext.Runtime.Bus
         // ATA34. Navigation / Radio Altimeter
         V32NN_Frequent_RA_1_RadioAltitude,
 
+        // ATA70. Engine
+        V32NN_Frequent_Engine_Both_ThrustLever,
+
         // Avionics Bus
         Count
     }
 
     public enum AvionicsBusIntDataIds
     {
+        // ATA20_10. Auto Flight / Pilot Interface / FCU
+        V32NN_Infrequent_FCU_Sync_SelectedAirspeedInKt,
+
         // ATA27. Flight Control / Flaps
         V32NN_Infrequent_Flap_LevelerPosition,
         V32NN_Infrequent_Flap_SFCC_1_ActualFlapPosition,
@@ -70,6 +83,10 @@ namespace VAU.V320NeoNext.Runtime.Bus
 
     public enum AvionicsBusBoolDataIds
     {
+        Sim_Infrequent_HaveAircraftOwnership,
+        Sim_Infrequent_IsPilot,
+        Sim_Frequent_Grounded,
+
         // ATA31. Indicating Recording / EFIS Control
         // Left EFIS
         V32NN_Infrequent_EFIS_Left_Sync_FlightDirectorOn,
@@ -78,6 +95,13 @@ namespace VAU.V320NeoNext.Runtime.Bus
         // Right EFIS
         V32NN_Infrequent_EFIS_Right_Sync_FlightDirectorOn,
         V32NN_Infrequent_EFIS_Right_Sync_LandingSystemOn,
+
+        // ATA32. Landing Gear / Brake
+        V32NN_Infrequent_Brake_Sync_ParkBrakeSet,
+
+        // ATA70. Engine
+        V32NN_Infrequent_Engine_Engine_1_Sync_ReverserLeverOn,
+        V32NN_Infrequent_Engine_Engine_2_Sync_ReverserLeverOn,
 
         // Avionics Bus
         Count
