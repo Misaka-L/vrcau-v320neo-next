@@ -227,7 +227,8 @@ namespace VAU.V320NeoNext.Runtime.Systems.LegacyFlightDataProvider {
         [PublicAPI] public float engine1fuelFlow => Mathf.Round(EngineL.ff / 20) * 20;
 
         [PublicAPI] public bool isEngine1Starting => EngineL.starter;
-        [PublicAPI] public bool isEngine1Reversing => EngineL.reversing; //判断反推：reversing
+        [PublicAPI] public bool isEngine1Reversing =>
+            _ReadBool(AvionicsBusBoolDataIds.V32NN_Infrequent_Engine_Engine_1_Sync_ReverserLeverOn); //判断反推：reversing
         [PublicAPI] public float engine1ThrottleLeveler => EngineL.throttleLeveler;
 
         [PublicAPI] public bool isEngine1ThrottleLevelerIdle =>
@@ -257,7 +258,8 @@ namespace VAU.V320NeoNext.Runtime.Systems.LegacyFlightDataProvider {
         [PublicAPI] public float engine2fuelFlow => Mathf.Round(EngineR.ff / 20) * 20;
 
         [PublicAPI] public bool isEngine2Starting => EngineR.starter;
-        [PublicAPI] public bool isEngine2Reversing => EngineR.reversing; //判断反推：reversing
+        [PublicAPI] public bool isEngine2Reversing =>
+            _ReadBool(AvionicsBusBoolDataIds.V32NN_Infrequent_Engine_Engine_2_Sync_ReverserLeverOn); //判断反推：reversing
         [PublicAPI] public float engine2ThrottleLeveler => EngineR.throttleLeveler;
 
         [PublicAPI] public bool isEngine2ThrottleLevelerIdle =>

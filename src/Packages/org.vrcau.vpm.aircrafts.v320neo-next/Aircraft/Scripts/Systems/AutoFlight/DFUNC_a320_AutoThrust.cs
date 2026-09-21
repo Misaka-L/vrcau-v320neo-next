@@ -3,6 +3,7 @@ using JetBrains.Annotations;
 using SaccFlightAndVehicles;
 using UdonSharp;
 using UnityEngine;
+using VAU.V320NeoNext.Runtime.Bus;
 using VAU.V320NeoNext.Runtime.Systems.Engine.SaccExt;
 using VAU.V320NeoNext.Runtime.Systems.LegacyFlightDataProvider;
 using VRC.SDKBase;
@@ -10,7 +11,7 @@ using VRC.SDKBase;
 namespace VAU.V320NeoNext.Runtime.Systems.AutoFlight
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
-    public class DFUNC_a320_AutoThrust : UdonSharpBehaviour
+    public class DFUNC_a320_AutoThrust : AbstractAvionicsBusClient
     {
         public SFEXT_a320_AdvancedEngine[] engines = { };
 
@@ -77,12 +78,8 @@ namespace VAU.V320NeoNext.Runtime.Systems.AutoFlight
 
         private bool IsReverse()
         {
-            foreach (var engine in engines)
-            {
-                if (engine.reversing) return true;
-            }
-
-            return false;
+            return _ReadBool(AvionicsBusBoolDataIds.V32NN_Infrequent_Engine_Engine_1_Sync_ReverserLeverOn) ||
+                   _ReadBool(AvionicsBusBoolDataIds.V32NN_Infrequent_Engine_Engine_2_Sync_ReverserLeverOn);
         }
 
         private bool IsEngineOn()

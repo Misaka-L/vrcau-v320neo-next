@@ -2,6 +2,7 @@ using System;
 using SaccFlightAndVehicles;
 using UdonSharp;
 using UnityEngine;
+using VAU.V320NeoNext.Runtime.Bus;
 using VAU.V320NeoNext.Runtime.Systems.LegacyFlightDataProvider;
 using VRC.SDKBase;
 using VRC.Udon.Common.Interfaces;
@@ -13,7 +14,7 @@ using Random = UnityEngine.Random;
 namespace VAU.V320NeoNext.Runtime.Systems.Engine.SaccExt {
     [UdonBehaviourSyncMode(BehaviourSyncMode.Continuous)]
     [DefaultExecutionOrder(1000)] // After SoundController
-    public class SFEXT_a320_AdvancedEngine : UdonSharpBehaviour {
+    public class SFEXT_a320_AdvancedEngine : AbstractAvionicsBusClient {
         [Header("Misc")]
         public EarthAtmosphereModel gasProperty;
         public float externalTempurature => gasProperty.TemperatureStatic;
@@ -286,7 +287,7 @@ namespace VAU.V320NeoNext.Runtime.Systems.Engine.SaccExt {
         [NonSerialized] public float idlePoint = 0.375f;
 
         // [Header("Runtime Synced Variables")]
-        [NonSerialized] [UdonSynced] public bool reversing, starter, fuel;
+        [NonSerialized] [UdonSynced] public bool starter, fuel;
         [NonSerialized] [UdonSynced] public float n1, n2, egt, ect, ff, throttleLeveler;
 
         [NonSerialized] public float throttleInput, oilTempurature, oilPressure;
@@ -300,6 +301,20 @@ namespace VAU.V320NeoNext.Runtime.Systems.Engine.SaccExt {
         public Animator reverserAnimator;
         private string gripAxis;
 
+        private bool Reversing
+        {
+            get => _ReadBool(_reverserLeverOnDataId);
+            set => _WriteAndNotifyBool(_reverserLeverOnDataId, value);
+        }
+
+        public bool isEngine2;
+        private AvionicsBusBoolDataIds _reverserLeverOnDataId;
+        protected override void _OnAvionicsBusStart()
+        {
+            _reverserLeverOnDataId = isEngine2
+                ? AvionicsBusBoolDataIds.V32NN_Infrequent_Engine_Engine_2_Sync_ReverserLeverOn
+                : AvionicsBusBoolDataIds.V32NN_Infrequent_Engine_Engine_1_Sync_ReverserLeverOn;
+        }
 
         public void EngageStarter() {
             starter = true;
@@ -347,7 +362,7 @@ namespace VAU.V320NeoNext.Runtime.Systems.Engine.SaccExt {
 
             starter = false;
             fuel = false;
-            reversing = false;
+            Reversing = false;
             reverserPosition = 0;
             throttleLeveler = idlePoint;
             airVehicle.ThrottleInput = idlePoint;
@@ -371,10 +386,10 @@ namespace VAU.V320NeoNext.Runtime.Systems.Engine.SaccExt {
         }
 
         private float Power_GetThrottleInput() {
-            var reverserInterlocked = reversing && reverserPosition < 0.5f;
+            var reverserInterlocked = Reversing && reverserPosition < 0.5f;
 
             float input;
-            if (reversing) {
+            if (Reversing) {
                 throttleLeveler = Mathf.Clamp(airVehicle.ThrottleInput, 0, idlePoint + 0.02f);
                 airVehicle.ThrottleInput = throttleLeveler;
                 airVehicle.PlayerThrottle = airVehicle.ThrottleInput;
@@ -457,7 +472,7 @@ namespace VAU.V320NeoNext.Runtime.Systems.Engine.SaccExt {
 
         private void Power_Update(float deltaTime) {
             //reverserPosition = TowWayMoveTowards(reverserPosition, reversing ? 1 : 0, deltaTime, reverserExtractResponse, reverserRetractResponse);
-            reverserPosition = TowWayMoveTowards(reverserPosition, reversing ? 0.99f : 0, deltaTime,
+            reverserPosition = TowWayMoveTowards(reverserPosition, Reversing ? 0.99f : 0, deltaTime,
                 reverserExtractResponse, reverserRetractResponse);
             oilTempurature = Lerp4(externalTempurature, idleOilTempurature, maxOilTempurature, takeOffOilTempurature,
                 ect, externalTempurature, idleECT, continuousECT, Mathf.Max(egt, continuousEGT));
@@ -590,7 +605,7 @@ namespace VAU.V320NeoNext.Runtime.Systems.Engine.SaccExt {
 
         private void Update_Animator() {
             if (vehicleAnimator) {
-                vehicleAnimator.SetBool("reverse", reversing);
+                vehicleAnimator.SetBool("reverse", Reversing);
                 vehicleAnimator.SetFloat("reverser", reverserPosition);
                 vehicleAnimator.SetFloat("throttleleveler", throttleLeveler);
             }

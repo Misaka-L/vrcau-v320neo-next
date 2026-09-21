@@ -41,6 +41,9 @@ namespace VAU.V320NeoNext.Runtime.Bus
         // ATA34. Navigation / Radio Altimeter
         V32NN_Frequent_RA_1_RadioAltitude,
 
+        // ATA70. Engine
+        V32NN_Frequent_Engine_Both_ThrustLever,
+
         // Avionics Bus
         Count
     }
@@ -79,6 +82,7 @@ namespace VAU.V320NeoNext.Runtime.Bus
     {
         Sim_Infrequent_HaveAircraftOwnership,
         Sim_Infrequent_IsPilot,
+        Sim_Frequent_Grounded,
 
         // ATA31. Indicating Recording / EFIS Control
         // Left EFIS
@@ -91,6 +95,10 @@ namespace VAU.V320NeoNext.Runtime.Bus
 
         // ATA32. Landing Gear / Brake
         V32NN_Infrequent_Brake_Sync_ParkBrakeSet,
+
+        // ATA70. Engine
+        V32NN_Infrequent_Engine_Engine_1_Sync_ReverserLeverOn,
+        V32NN_Infrequent_Engine_Engine_2_Sync_ReverserLeverOn,
 
         // Avionics Bus
         Count
