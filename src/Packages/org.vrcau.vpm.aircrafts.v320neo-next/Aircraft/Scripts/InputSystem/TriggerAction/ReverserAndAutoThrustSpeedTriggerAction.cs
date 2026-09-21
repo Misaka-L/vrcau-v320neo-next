@@ -9,6 +9,7 @@ namespace VAU.V320NeoNext.Runtime.InputSystem.TriggerAction
     public class ReverserAndAutoThrustSpeedTriggerAction : AbstractAvionicsBusClient
     {
         public string triggerAxis = "Oculus_CrossPlatform_SecondaryIndexTrigger";
+        public VRCPlayerApi.TrackingDataType trackingDataType = VRCPlayerApi.TrackingDataType.RightHand;
 
         public KeyCode keyboardControl = KeyCode.X;
 
@@ -16,14 +17,18 @@ namespace VAU.V320NeoNext.Runtime.InputSystem.TriggerAction
         private bool _triggerPressedLastFrame;
         private bool _inAutoThrustMode;
 
+        private VRCPlayerApi _localPlayer;
         private bool _playerInVr;
+        private Transform _objectTransform;
 
         private void Start()
         {
-            _playerInVr = Networking.LocalPlayer.IsUserInVR();
+            _localPlayer = Networking.LocalPlayer;
+            _playerInVr = _localPlayer.IsUserInVR();
+            _objectTransform = transform;
         }
 
-        private void LateUpdate()
+        public override void PostLateUpdate()
         {
             var allowReverse = _ReadBool(AvionicsBusBoolDataIds.Sim_Frequent_Grounded);
             var allowStartReverse =
@@ -32,53 +37,94 @@ namespace VAU.V320NeoNext.Runtime.InputSystem.TriggerAction
 
             if (!_playerInVr)
             {
-                if (!allowReverse)
-                {
-                    if (GetReverserLeverOn()) SetReverserLever(false);
-                }
-                else if (Input.GetKeyDown(keyboardControl))
-                {
-                    if (GetReverserLeverOn())
-                    {
-                        SetReverserLever(false);
-                    }
-                    else if (allowStartReverse)
-                    {
-                        SetReverserLever(true);
-                    }
-                }
+                HandleDesktopInput(allowReverse, allowStartReverse);
             }
             else
             {
-                var isTriggerPressed = Input.GetAxisRaw(triggerAxis) > 0.75f;
-                if (isTriggerPressed)
+                HandleVrInput(allowStartReverse);
+            }
+        }
+
+        private void HandleVrInput(bool allowStartReverse)
+        {
+            var isTriggerPressed = Input.GetAxisRaw(triggerAxis) > 0.75f;
+            if (isTriggerPressed)
+            {
+                if (Time.time - _lastTriggerReleasedAtTime < 0.4f) // Double tap -> A/THR Target speed mode
                 {
-                    _triggerPressedLastFrame = true;
-
-                    if (Time.time - _lastTriggerReleasedAtTime < 0.4f) // Double tap -> A/THR Target speed mode
-                    {
-                        _inAutoThrustMode = true;
-                    }
-
-                    if (_inAutoThrustMode)
-                    {
-                        // TODO: A/THR Target Speed
-                    }
-                    else if (allowStartReverse)
-                    {
-                        if (!GetReverserLeverOn()) SetReverserLever(true);
-                    }
+                    _inAutoThrustMode = true;
                 }
-                else
-                {
-                    _inAutoThrustMode = false;
-                    if (GetReverserLeverOn()) SetReverserLever(false);
 
-                    if (_triggerPressedLastFrame)
-                    {
-                        _lastTriggerReleasedAtTime = Time.time;
-                        _triggerPressedLastFrame = false;
-                    }
+                if (_inAutoThrustMode)
+                {
+                    HandleAutoThrustInput();
+                }
+                else if (allowStartReverse)
+                {
+                    if (!GetReverserLeverOn()) SetReverserLever(true);
+                }
+
+                _triggerPressedLastFrame = true;
+            }
+            else
+            {
+                _inAutoThrustMode = false;
+                _referenceSpeed = -1;
+                if (GetReverserLeverOn()) SetReverserLever(false);
+
+                if (_triggerPressedLastFrame)
+                {
+                    _lastTriggerReleasedAtTime = Time.time;
+                    _triggerPressedLastFrame = false;
+                }
+            }
+        }
+
+        private int _referenceSpeed;
+        private void HandleAutoThrustInput()
+        {
+            var selectedSpeed = _ReadInt(AvionicsBusIntDataIds.V32NN_Infrequent_FCU_Sync_SelectedAirspeedInKt);
+            if (_referenceSpeed == -1) _referenceSpeed = selectedSpeed;
+
+            var speedDiff = GetControllerMoveInput() * 250f;
+            var newSpeedTarget = _referenceSpeed + Mathf.RoundToInt(speedDiff);
+            newSpeedTarget = Mathf.Clamp(newSpeedTarget, 100, 399);
+            _WriteAndNotifyInt(AvionicsBusIntDataIds.V32NN_Infrequent_FCU_Sync_SelectedAirspeedInKt, newSpeedTarget);
+        }
+
+        private Vector3 _referenceRelativePositionToSelf;
+
+        private float GetControllerMoveInput()
+        {
+            var controllerTrackingData = _localPlayer.GetTrackingData(trackingDataType);
+            var relativePositionToSelf = _objectTransform.InverseTransformDirection(
+                _objectTransform.position - controllerTrackingData.position);
+
+            if (!_triggerPressedLastFrame)
+            {
+                _referenceRelativePositionToSelf = relativePositionToSelf;
+                return 0;
+            }
+
+            var input = relativePositionToSelf - _referenceRelativePositionToSelf;
+            return input.z;
+        }
+
+        private void HandleDesktopInput(bool allowReverse, bool allowStartReverse)
+        {
+            if (!allowReverse)
+            {
+                if (GetReverserLeverOn()) SetReverserLever(false);
+            }
+            else if (Input.GetKeyDown(keyboardControl))
+            {
+                if (GetReverserLeverOn())
+                {
+                    SetReverserLever(false);
+                }
+                else if (allowStartReverse)
+                {
+                    SetReverserLever(true);
                 }
             }
         }

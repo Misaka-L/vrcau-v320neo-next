@@ -6,7 +6,6 @@ using UnityEngine;
 using VAU.V320NeoNext.Runtime.Bus;
 using VAU.V320NeoNext.Runtime.Systems.Engine.SaccExt;
 using VAU.V320NeoNext.Runtime.Systems.LegacyFlightDataProvider;
-using VRC.SDKBase;
 
 namespace VAU.V320NeoNext.Runtime.Systems.AutoFlight
 {
@@ -18,8 +17,6 @@ namespace VAU.V320NeoNext.Runtime.Systems.AutoFlight
         private DependenciesInjector _injector;
         private AircraftSystemData _aircraftSystemData;
         private SaccAirVehicle _saccAirVehicle;
-
-        private VRCPlayerApi localPlayer;
 
         public KeyCode increaseSpeedKey = KeyCode.Equals;
         public KeyCode decreaseSpeedKey = KeyCode.Minus;
@@ -37,9 +34,11 @@ namespace VAU.V320NeoNext.Runtime.Systems.AutoFlight
         //public float CruiseIntegratorMax = 5;
         //public float CruiseIntegratorMin = -5;
 
-        private float CruiseTemp;
-        private float SpeedZeroPoint;
-        [NonSerialized] public int SetSpeed = 194;
+        public int SetSpeed
+        {
+            get => _ReadInt(AvionicsBusIntDataIds.V32NN_Infrequent_FCU_Sync_SelectedAirspeedInKt);
+            set => _WriteAndNotifyInt(AvionicsBusIntDataIds.V32NN_Infrequent_FCU_Sync_SelectedAirspeedInKt, value);
+        }
 
         [NonSerialized] public bool Cruise;
         [NonSerialized] public bool OP_CLB = false;
@@ -56,7 +55,16 @@ namespace VAU.V320NeoNext.Runtime.Systems.AutoFlight
         private const int MaxSpeedInKt = 399;
 
         private bool EngineOn => IsEngineOn();
-        private bool InReverse => IsReverse();
+
+        protected override void _OnAvionicsBusStart()
+        {
+            SetSpeed = 194;
+        }
+
+        protected override void _OnAvionicsBusRespawnByLocalPlayer()
+        {
+            SetSpeed = 194;
+        }
 
         private void Init()
         {
@@ -74,12 +82,6 @@ namespace VAU.V320NeoNext.Runtime.Systems.AutoFlight
         public void SFEXT_L_EntityStart()
         {
             Init();
-        }
-
-        private bool IsReverse()
-        {
-            return _ReadBool(AvionicsBusBoolDataIds.V32NN_Infrequent_Engine_Engine_1_Sync_ReverserLeverOn) ||
-                   _ReadBool(AvionicsBusBoolDataIds.V32NN_Infrequent_Engine_Engine_2_Sync_ReverserLeverOn);
         }
 
         private bool IsEngineOn()

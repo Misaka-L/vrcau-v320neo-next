@@ -50,6 +50,9 @@ namespace VAU.V320NeoNext.Runtime.Bus
 
     public enum AvionicsBusIntDataIds
     {
+        // ATA20_10. Auto Flight / Pilot Interface / FCU
+        V32NN_Infrequent_FCU_Sync_SelectedAirspeedInKt,
+
         // ATA27. Flight Control / Flaps
         V32NN_Infrequent_Flap_LevelerPosition,
         V32NN_Infrequent_Flap_SFCC_1_ActualFlapPosition,
