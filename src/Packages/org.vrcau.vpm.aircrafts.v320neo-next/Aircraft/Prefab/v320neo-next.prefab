@@ -71774,7 +71774,7 @@ MonoBehaviour:
   PitchThrustVecMulti: 0
   PitchFriction: 20
   PitchConstantFriction: 20
-  PitchResponse: 5
+  PitchResponse: 2.5
   ReversingPitchStrengthMulti: 2
   YawStrength: 0.30833334
   YawThrustVecMulti: 0
