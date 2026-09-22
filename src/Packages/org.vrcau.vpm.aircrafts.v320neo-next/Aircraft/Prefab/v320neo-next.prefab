@@ -56152,10 +56152,10 @@ MonoBehaviour:
   liftMultiplier:
   - 1
   - 2.2
+  - 2.4
+  - 2.5
+  - 2.6
   - 2.7
-  - 2.7
-  - 2.7
-  - 3
   response: 3
   powerSource: {fileID: 4856018768879198545}
   adiru: {fileID: 7512220004376106281}
@@ -65481,7 +65481,7 @@ MonoBehaviour:
   TrimErrorDerivative: 0
   kp1: 0.04
   ki1: 0.0015
-  kd1: 0.0001
+  kd1: 0.0005
   kp2: 0.25
   ki2: 0.4
   kd2: 0.0003
@@ -71770,11 +71770,11 @@ MonoBehaviour:
   AccelerationResponse: 0.5
   EngineSpoolDownSpeedMulti: 0.3
   AirFriction: 0.00009
-  PitchStrength: 1.5373335
+  PitchStrength: 3.0746667
   PitchThrustVecMulti: 0
-  PitchFriction: 20
+  PitchFriction: 0
   PitchConstantFriction: 20
-  PitchResponse: 10
+  PitchResponse: 14.4
   ReversingPitchStrengthMulti: 2
   YawStrength: 0.30833334
   YawThrustVecMulti: 0
@@ -71795,8 +71795,8 @@ MonoBehaviour:
   AdverseYaw: 0
   AdverseRoll: 0
   RotMultiMaxSpeed: 92
-  VelStraightenStrPitch: 0.035
-  VelStraightenStrYaw: 0.045
+  VelStraightenStrPitch: 0.33333334
+  VelStraightenStrYaw: 0.028333334
   MaxAngleOfAttackPitch: 18
   MaxAngleOfAttackYaw: 30
   AoaCurveStrength: 2

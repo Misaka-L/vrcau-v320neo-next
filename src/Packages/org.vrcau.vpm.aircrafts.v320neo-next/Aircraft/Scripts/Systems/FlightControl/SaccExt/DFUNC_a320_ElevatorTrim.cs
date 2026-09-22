@@ -73,6 +73,7 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.SaccExt
             if (vehicleAnimator) vehicleAnimator.SetFloat(animatorParameterName, .5f);
             //SAVControl.SetProgramVariable("VelLiftStart", trimStrength* trim + trimBias);
             vehicleRigidbody = SAVControl.VehicleRigidbody;
+            pitchForcePosition = SAVControl.PitchMoment;
             TrimError = 0;
             TrimErrorIntergrate = 0;
             TrimErrorDerivative = 0;
@@ -275,37 +276,19 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.SaccExt
 
         private void FixedUpdate()
         {
+            isDirty = false;
+            if (isPilot) PilotUpdate();
+            LocalUpdate();
+            if (!hasPilot && !isDirty) gameObject.SetActive(false);
+
             if (!isOwner) return;
 
             var rotlift = Mathf.Clamp(SAVControl.AirSpeed / rotMultiMaxSpeed, -1, 1);
             //var DeltaTime = Time.fixedDeltaTime;
-            // vehicleRigidbody.AddForceAtPosition((trim * SAVControl.PitchStrength) * rotlift * SAVControl.Atmosphere * -transform.up, transform.position, ForceMode.Force);
-            var vehicleTransform = SAVControl.VehicleTransform;
-            var downspeed = -Vector3.Dot(SAVControl.AirVel, vehicleTransform.up);
-
-            var angleOfAttackPitch = Vector3.SignedAngle(
-                vehicleTransform.forward, Vector3.ProjectOnPlane(SAVControl.AirVel, vehicleTransform.right),
-                vehicleTransform.right
-            ) - SAVControl.ZeroLiftAoA;
-            float absPitch = Mathf.Abs(angleOfAttackPitch);
-            if (absPitch > 90) absPitch = 180 - absPitch; //flying backwards
-            var aoALiftPitch =
-                absPitch / SAVControl.MaxAngleOfAttackPitch; //angle of attack as 0-1 float, for backwards and forwards
-            aoALiftPitch = 1 - Mathf.Pow(aoALiftPitch, SAVControl.AoaCurveStrength); //give it a curve
-
-            float aoALiftPitchMin =
-                absPitch * 0.0111111111f /* same as divide by 90 */; //linear version to 90 for high aoa
-            aoALiftPitchMin = Mathf.Clamp01((1 - aoALiftPitchMin) * SAVControl.HighPitchAoaMinControl);
-            aoALiftPitch = Mathf.Clamp(aoALiftPitch, aoALiftPitchMin, 1);
-            aoALiftPitch = Mathf.Clamp(aoALiftPitch, SAVControl.HighPitchAoaMinLift, 1);
-
-            var pitchForce = (vehicleTransform.up * -trim +
-                              vehicleTransform.up *
-                              (downspeed * SAVControl.VelStraightenStrPitch * aoALiftPitch * rotlift)) *
-                             (SAVControl.Atmosphere * SAVControl.VehicleRigidbody.mass);
-            vehicleRigidbody.AddForceAtPosition(
-                pitchForce,
-                SAVControl.PitchMoment.position, ForceMode.Force);
+            var trimForce = (trim * SAVControl.PitchStrength) * rotlift * SAVControl.Atmosphere * 
+                            -SAVControl.VehicleTransform.up;
+            trimForce *= vehicleRigidbody.mass;
+            vehicleRigidbody.AddForceAtPosition(trimForce, pitchForcePosition.position, ForceMode.Force);
 
             //尝试了不同的作用力方式
             //1.改VelLiftStart
@@ -370,6 +353,7 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.SaccExt
         public SaccAirVehicle SAVControl;
         private Transform controlsRoot;
         private Rigidbody vehicleRigidbody;
+        private Transform pitchForcePosition;
         private Animator vehicleAnimator;
         private bool hasPilot, isPilot, isOwner, isDirty;
         private float rotMultiMaxSpeed;
@@ -426,14 +410,6 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.SaccExt
         public void SFEXT_G_RespawnButton()
         {
             ResetStatus();
-        }
-
-        private void Update()
-        {
-            isDirty = false;
-            if (isPilot) PilotUpdate();
-            LocalUpdate();
-            if (!hasPilot && !isDirty) gameObject.SetActive(false);
         }
 
         public override void PostLateUpdate()
