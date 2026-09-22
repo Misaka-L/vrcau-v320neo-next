@@ -56151,12 +56151,12 @@ MonoBehaviour:
   - 3
   liftMultiplier:
   - 1
-  - 1.15
-  - 1.198
-  - 1.277
-  - 1.297
-  - 1.35
-  response: 1.6
+  - 2.2
+  - 2.7
+  - 2.7
+  - 2.7
+  - 3
+  response: 3
   powerSource: {fileID: 4856018768879198545}
   adiru: {fileID: 7512220004376106281}
   desktopKey: 102
@@ -71770,11 +71770,11 @@ MonoBehaviour:
   AccelerationResponse: 0.5
   EngineSpoolDownSpeedMulti: 0.3
   AirFriction: 0.00009
-  PitchStrength: 3.0746667
+  PitchStrength: 1.5373335
   PitchThrustVecMulti: 0
   PitchFriction: 20
   PitchConstantFriction: 20
-  PitchResponse: 2.5
+  PitchResponse: 10
   ReversingPitchStrengthMulti: 2
   YawStrength: 0.30833334
   YawThrustVecMulti: 0
