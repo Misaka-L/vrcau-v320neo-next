@@ -65487,7 +65487,7 @@ MonoBehaviour:
   kd2: 0.0003
   animatorParameterName: elevtrim
   trimMode: 0
-  autoTrimActive: 0
+  autoTrimActive: 1
   TrimActiveLastFrame: 0
   afloorProtect: 0
   lowSpeedMode: 0
