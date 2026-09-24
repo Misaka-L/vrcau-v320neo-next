@@ -24,8 +24,8 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.SaccExt
         //[Range(0, 50)] public float trimBias = 8;
         private float prevTrim;
 
-        [NonSerialized] [PublicAPI] public bool isTrimUpHold;
-        [NonSerialized] [PublicAPI] public bool isTrimDownHold;
+        // 配平的手动输入由 ElevatorTrimFlightMenuController 解读成**目标配平位置**后写到
+        // V32NN_Infrequent_ElevatorTrim_Sync_Trim；本系统只接收数值，不感知 hold 与按键。
 
         public float initialTrim = 0.3f;
         [UdonSynced] public float trim; //当前配平位置，-1~1
@@ -86,16 +86,6 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.SaccExt
         {
             //计算配平值
             float DeltaTime = Time.deltaTime;
-
-            if (isTrimUpHold)
-            {
-                trim += desktopStep * DeltaTime * 10;
-            }
-
-            if (isTrimDownHold)
-            {
-                trim -= desktopStep * DeltaTime * 10;
-            }
 
             var pitchInputs = SAVControl.RotationInputs.x;
 

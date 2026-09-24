@@ -3,6 +3,7 @@ using JetBrains.Annotations;
 using SaccFlightAndVehicles;
 using UdonSharp;
 using UnityEngine;
+using VAU.V320NeoNext.Runtime.Bus;
 using VAU.V320NeoNext.Runtime.Systems.AuxiliaryPowerUnit;
 using VAU.V320NeoNext.Runtime.Systems.Engine.SaccExt;
 using VRC.SDKBase;
@@ -12,7 +13,7 @@ using VRC.SDKBase;
 namespace VAU.V320NeoNext.Runtime.Systems.AutoStarter {
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     [DefaultExecutionOrder(1000)] // After SaccAirVehicle
-    public class A320AutoStarter : UdonSharpBehaviour {
+    public class A320AutoStarter : AbstractAvionicsBusClient {
         public const byte STATE_OFF = 0;
         public const byte STATE_ElETRICAL_START = 1;
         public const byte STATE_ElETRICAL_STOP = 2;
@@ -41,13 +42,46 @@ namespace VAU.V320NeoNext.Runtime.Systems.AutoStarter {
 
         private byte prevState;
 
-        [Header("Runtime Synced State")]
-        [NonSerialized] public bool start;
-
         [Header("Runtime Local State")]
         [NonSerialized] [UdonSynced] public byte state;
 
         private float stateChangedTime;
+
+        // —— FlightMenu bridge ——
+        // 启动请求的状态就存在总线上（V32NN_Infrequent_AutoStart_Sync_Start），
+        // 本系统直接读写同一个变量，不再维护第二份 state，也不需要额外的 adapter。
+        private const AvionicsBusBoolDataIds StartId =
+            AvionicsBusBoolDataIds.V32NN_Infrequent_AutoStart_Sync_Start;
+
+        private const AvionicsBusBoolDataIds IndicatorActivatedId =
+            AvionicsBusBoolDataIds.V32NN_Infrequent_AutoStart_IndicatorActivated;
+
+        private bool _busReady;
+        private bool _hasPublishedIndicatorActivated;
+        private bool _lastIndicatorActivated;
+
+        /// <summary>总线上的这一个变量就是「是否已请求启动」的状态本身。</summary>
+        private bool StartRequested {
+            get => _busReady && _ReadBool(StartId);
+            set { if (_busReady) _WriteAndNotifyBool(StartId, value); }
+        }
+
+        protected override void _OnAvionicsBusStart() {
+            _busReady = true;
+        }
+
+        /// <summary>
+        /// isIndicatorActivated 本来就在 Update 里算好了，这里只在它变化时同步到总线
+        /// （很少变化，走事件通知），不需要额外的 adapter。
+        /// </summary>
+        private void PublishIndicatorActivated() {
+            if (!_busReady) return;
+            if (_hasPublishedIndicatorActivated && isIndicatorActivated == _lastIndicatorActivated) return;
+
+            _hasPublishedIndicatorActivated = true;
+            _lastIndicatorActivated = isIndicatorActivated;
+            _WriteAndNotifyBool(IndicatorActivatedId, isIndicatorActivated);
+        }
 
         private void Update() {
             if (!initialized) return;
@@ -56,11 +90,11 @@ namespace VAU.V320NeoNext.Runtime.Systems.AutoStarter {
 
             if (isPilot) {
                 if (Input.GetKeyDown(startKey)) {
-                    if (!start) {
+                    if (!StartRequested) {
                         holdThrottle = true;
                     }
 
-                    SetStart(!start);
+                    StartRequested = !StartRequested;
                 }
 
                 if (holdThrottle && Input.GetKeyUp(startKey)) {
@@ -70,12 +104,14 @@ namespace VAU.V320NeoNext.Runtime.Systems.AutoStarter {
             }
 
             if (isOwner) {
-                isIndicatorActivated = start;
+                isIndicatorActivated = StartRequested;
             }
             else if (isPassenger) {
                 var remoteStart = state != STATE_OFF;
                 isIndicatorActivated = remoteStart;
             }
+
+            PublishIndicatorActivated();
 
             var stateChanged = state != prevState;
             prevState = state;
@@ -114,7 +150,7 @@ namespace VAU.V320NeoNext.Runtime.Systems.AutoStarter {
 
             switch (state) {
                 case STATE_OFF:
-                    if (start) SetState(STATE_ElETRICAL_START);
+                    if (StartRequested) SetState(STATE_ElETRICAL_START);
                     break;
                 case STATE_ElETRICAL_START:
                     if (isOwner) {
@@ -129,7 +165,7 @@ namespace VAU.V320NeoNext.Runtime.Systems.AutoStarter {
                     //     if (stateChanged && eletricalBus.batteryOn) eletricalBus.OnToggleBattery();
                     //     if (!eletricalBus || !eletricalBus.hasPower) SetState(start ? STATE_ON : STATE_OFF);
                     // }
-                    SetState(start ? STATE_ON : STATE_OFF);
+                    SetState(StartRequested ? STATE_ON : STATE_OFF);
 
                     break;
                 case STATE_APU_START:
@@ -142,7 +178,7 @@ namespace VAU.V320NeoNext.Runtime.Systems.AutoStarter {
                 case STATE_APU_STOP:
                     if (isOwner) {
                         if (stateChanged && apu) apu.StopAPU();
-                        if (!apu || apu.terminated) SetState(start ? STATE_ON : STATE_OFF);
+                        if (!apu || apu.terminated) SetState(StartRequested ? STATE_ON : STATE_OFF);
                     }
 
                     break;
@@ -182,7 +218,7 @@ namespace VAU.V320NeoNext.Runtime.Systems.AutoStarter {
                     break;
 
                 case STATE_ON:
-                    if (!start) SetState(STATE_ENGINE_STOP);
+                    if (!StartRequested) SetState(STATE_ENGINE_STOP);
                     break;
             }
 
@@ -197,7 +233,7 @@ namespace VAU.V320NeoNext.Runtime.Systems.AutoStarter {
             apu = (SFEXT_AuxiliaryPowerUnit)GetExtention(entity, GetUdonTypeName<SFEXT_AuxiliaryPowerUnit>());
             engines = (SFEXT_a320_AdvancedEngine[])GetExtentions(entity, GetUdonTypeName<SFEXT_a320_AdvancedEngine>());
 
-            start = false;
+            StartRequested = false;
             state = STATE_OFF;
 
             isIndicatorActivated = false;
@@ -243,7 +279,7 @@ namespace VAU.V320NeoNext.Runtime.Systems.AutoStarter {
 
         private void ResetStatus() {
             state = STATE_OFF;
-            start = false;
+            StartRequested = false;
         }
 
         public override void PostLateUpdate() {
@@ -253,11 +289,7 @@ namespace VAU.V320NeoNext.Runtime.Systems.AutoStarter {
         [PublicAPI]
         public void _ToggleStart()
         {
-            SetStart(!start);
-        }
-
-        private void SetStart(bool value) {
-            start = value;
+            StartRequested = !StartRequested;
         }
 
         private void SetState(byte value) {

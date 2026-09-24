@@ -1,4 +1,4 @@
-﻿using UdonSharp;
+using UdonSharp;
 using UnityEngine;
 using VAU.V320NeoNext.Runtime.Bus;
 
@@ -29,7 +29,9 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.Flybywire.Fac
 
         private float GetMaxAoa()
         {
-            var flapIndex = _ReadInt(AvionicsBusIntDataIds.V32NN_Infrequent_Flap_SFCC_1_ActualFlapPosition);
+            var flapIndex = _ReadInt(AvionicsBusIntDataIds.V32NN_Frequent_Flap_SFCC_1_ActualFlapPosition);
+            // 负值表示正在向 -index-1 档移动，取目标档位
+            if (flapIndex < 0) flapIndex = -flapIndex - 1;
             switch (flapIndex)
             {
                 case 1:

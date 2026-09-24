@@ -1,4 +1,5 @@
 ﻿using UdonSharp;
+using UnityEngine;
 using VAU.V320NeoNext.Runtime.Bus;
 using VRC.SDKBase;
 
@@ -18,10 +19,10 @@ namespace VAU.V320NeoNext.Runtime.Systems.LandingGear.Brake
             _SubscribeBool(ParkBrakeSetId, nameof(_OnParkBrakeSetChanged));
         }
 
-        private void _OnParkBrakeSetChanged()
+        public void _OnParkBrakeSetChanged()
         {
             if (_applyingRemoteData) return;
-            if (Networking.IsOwner(gameObject)) Networking.SetOwner(Networking.LocalPlayer, gameObject);
+            if (!Networking.IsOwner(gameObject)) Networking.SetOwner(Networking.LocalPlayer, gameObject);
 
             _isParkBrakeSet = _ReadBool(ParkBrakeSetId);
             RequestSerialization();
