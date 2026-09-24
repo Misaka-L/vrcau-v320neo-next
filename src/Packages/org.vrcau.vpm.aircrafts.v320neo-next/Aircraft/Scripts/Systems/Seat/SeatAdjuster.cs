@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using JetBrains.Annotations;
 using UdonSharp;
 using UnityEngine;
@@ -13,6 +13,7 @@ namespace VAU.V320NeoNext.Runtime.Systems.Seat
         public Transform adjustTargetInVr;
         public Transform adjustTargetInDesktop;
 
+        /// <summary>每次 <c>StepMove*</c> 移动的距离（米）。</summary>
         public float adjustStep = 0.5f;
 
         private bool _isInitialized;
@@ -20,26 +21,34 @@ namespace VAU.V320NeoNext.Runtime.Systems.Seat
         private bool _isPlayerInVr;
         private Vector3 _targetInitialLocalPosition;
 
-        [NonSerialized] [PublicAPI] public bool holdToMoveUp;
-        [NonSerialized] [PublicAPI] public bool holdToMoveDown;
-        [NonSerialized] [PublicAPI] public bool holdToMoveBackward;
-        [NonSerialized] [PublicAPI] public bool holdToMoveForward;
+        private Vector3 _lastAppliedOffset;
+        private bool _hasAppliedOffset;
 
-        private void Update()
+        private const AvionicsBusVector3DataIds OffsetId =
+            AvionicsBusVector3DataIds.V32NN_Infrequent_Seat_Offset;
+
+        /// <summary>
+        /// 座位偏移量由 <c>SeatAdjusterFlightMenuController</c> 解读「长按移动」后写到
+        /// <c>V32NN_Infrequent_Seat_Offset</c>，本系统直接跟随这个值
+        /// （该值只在按住时改变，所以走事件通知，本类不需要 Update）。
+        /// <para>座位调整是每玩家本机行为，只有按下菜单的客户端会写自己的本地总线。</para>
+        /// </summary>
+        protected override void _OnAvionicsBusPostStart()
         {
-            // Handle Hold To Move Logic
-            if (!holdToMoveDown && !holdToMoveBackward && !holdToMoveForward && !holdToMoveUp) return;
+            _SubscribeVector3(OffsetId, nameof(_OnOffsetChanged));
+        }
+
+        public void _OnOffsetChanged()
+        {
+            var offset = _ReadVector3(OffsetId);
+
+            if (_hasAppliedOffset && offset == _lastAppliedOffset) return;
+
+            _hasAppliedOffset = true;
+            _lastAppliedOffset = offset;
+
             LazyStart();
-
-            var moveOffset = Vector3.zero;
-            if (holdToMoveUp) moveOffset += Vector3.up;
-            if (holdToMoveDown) moveOffset += Vector3.down;
-            if (holdToMoveForward) moveOffset += Vector3.forward;
-            if (holdToMoveBackward) moveOffset += Vector3.back;
-
-            var moveTarget = GetTargetLocalPosition() + moveOffset * (adjustStep * Time.deltaTime);
-
-            SetTargetLocalPosition(moveTarget);
+            SetTargetLocalPosition(_targetInitialLocalPosition + offset);
         }
 
         protected override void _OnAvionicsBusRespawnByLocalPlayer() => ResetTargetPosition();

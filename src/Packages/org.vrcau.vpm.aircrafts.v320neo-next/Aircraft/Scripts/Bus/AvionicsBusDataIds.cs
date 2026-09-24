@@ -44,6 +44,15 @@ namespace VAU.V320NeoNext.Runtime.Bus
         // ATA70. Engine
         V32NN_Frequent_Engine_Both_ThrustLever,
 
+        // ATA27. Flight Control / Flaps & Elevator Trim
+        // 襟翼移动期间每帧都会变：只写不 Notify，由 FlapFlightMenuController 轮询后自行算状态文本
+        V32NN_Frequent_Flap_SlatAngle,
+        V32NN_Frequent_Flap_FlapAngle,
+        V32NN_Frequent_ElevatorTrim_TrimPosition,
+        // 目标配平位置：bridge 解读用户输入后写出的「系统需要的值」。
+        // 每帧都会变化（长按配平），所以是 Frequent + 只写不 Notify，消费方轮询。
+        V32NN_Frequent_ElevatorTrim_TargetTrim,
+
         // Avionics Bus
         Count
     }
@@ -54,11 +63,31 @@ namespace VAU.V320NeoNext.Runtime.Bus
         V32NN_Infrequent_FCU_Sync_SelectedAirspeedInKt,
 
         // ATA27. Flight Control / Flaps
-        V32NN_Infrequent_Flap_LevelerPosition,
-        V32NN_Infrequent_Flap_SFCC_1_ActualFlapPosition,
+        // 襟翼移动期间每帧都会变，只写不 Notify（由 FlapFlightMenuController 轮询）
+        V32NN_Frequent_Flap_LevelerPosition,
+        V32NN_Frequent_Flap_SFCC_1_ActualFlapPosition,
 
         V32NN_Frequent_ADR_HeadingDegrees,
         V32NN_Frequent_ADIRS_AlignmentState,
+
+        // --- FlightMenu (InputSystem/FlightMenuController) ---
+        // 说明：总线只承载「系统需要的值」与「对任何总线客户端都有意义的系统状态」。
+        // 用户输入（含长按 hold）由 <X>FlightMenuController 解读成这些值后再写入，
+        // 不使用 pulse / 事件型变量，飞机系统也不感知原始输入。
+        // 每帧变化的量标 Frequent 且只写不 Notify（消费方轮询）；很少变化的量才用事件通知。
+
+        // ATA27. Flight Control / Flaps
+        // 请求档位：无 _Sync_ —— leverIndex 由 DFUNC_a320_FlapController 自行维护网络同步
+        V32NN_Infrequent_Flap_RequestedLeverIndex,
+        V32NN_Frequent_Flap_LeverIndex,
+
+        // ATA32. Landing Gear / Auto Brake
+        // 总线即状态本身（0=Off 1=Low 2=Med 3=Max），由 AutoBrakeAvionicsBusSync 做网络同步
+        V32NN_Infrequent_AutoBrake_Sync_Mode,
+
+        // ATA23. Communication / VHF
+        V32NN_Infrequent_VHF_ChannelKhz,
+
         Count
     }
 
@@ -105,6 +134,34 @@ namespace VAU.V320NeoNext.Runtime.Bus
         V32NN_Infrequent_Engine_Engine_1_Sync_ReverserLeverOn,
         V32NN_Infrequent_Engine_Engine_2_Sync_ReverserLeverOn,
 
+        // ATA49. APU / Auto Start (FlightMenu)
+        V32NN_Infrequent_AutoStart_Sync_Start,
+        V32NN_Infrequent_AutoStart_IndicatorActivated,
+
+        // ATA27. Flight Control / Elevator Trim (FlightMenu)
+        V32NN_Infrequent_ElevatorTrim_Sync_AutoTrimActive,
+        V32NN_Frequent_ElevatorTrim_AutoTrimActive,
+
+        // ATA22. Auto Flight / Auto Thrust (FlightMenu)
+        // Engage 只是「按了一次 Toggle A/THR」的目标状态：接通状态只在 owner 本地有意义，
+        // 因此 **不做网络同步**（无 _Sync_、无 Sync 类），谁按谁本地应用、只有 owner 生效。
+        V32NN_Infrequent_AutoThrust_EngageRequest,
+        V32NN_Infrequent_AutoThrust_Cruise,
+        // Armed：本机「已预位或已在巡航」状态，bridge 用它算反值
+        V32NN_Infrequent_AutoThrust_Armed,
+
+        // ATA23. Communication / VHF (FlightMenu)
+        // 无 _Sync_ —— SFEXT_URC_VHF 自己负责网络同步，总线不重复同步。
+        // 只有按下菜单的客户端会写自己的本地总线，也就只有它的 Adapter 会应用。
+        V32NN_Infrequent_VHF_RequestedRxOn,
+        V32NN_Infrequent_VHF_RequestedTxOn,
+        V32NN_Infrequent_VHF_RxPower,
+        V32NN_Infrequent_VHF_TxPower,
+
+        // ATA32. Landing Gear / Auto Brake (FlightMenu)
+        V32NN_Infrequent_AutoBrake_Active,
+        V32NN_Infrequent_AutoBrake_ReachDecelTarget,
+
         // Avionics Bus
         Count
     }
@@ -119,6 +176,10 @@ namespace VAU.V320NeoNext.Runtime.Bus
     {
         V32NN_Frequent_ADR_VelocityNED = 0,
         V32NN_Infrequent_ND_WindVector = 1,
-        Count = 2
+        // Seat（每玩家本机，无 _Sync_）：座位相对初始位置的偏移。
+        // 总线上的这一个变量就是唯一状态：SeatAdjusterFlightMenuController 写，SeatAdjuster 读。
+        // 只在按住时改变，因此是 Infrequent，走事件通知（SeatAdjuster 不需要 Update）。
+        V32NN_Infrequent_Seat_Offset = 2,
+        Count = 3
     }
 }

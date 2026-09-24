@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using JetBrains.Annotations;
 using SaccFlightAndVehicles;
 using UdonSharp;
@@ -69,17 +69,101 @@ namespace VAU.V320NeoNext.Runtime.Systems.LegacyAutoBrake
                 if (_currentAutoBrakeMode == value) return;
 
                 _currentAutoBrakeMode = value;
-                RequestSerialization();
+
+                // 总线上的那个变量就是档位状态本身：改档位＝直接更新总线上的状态。
+                // 从总线跟随过来时不再写回，避免回环。
+                if (!_isApplyingBusMode) _WriteAndNotifyInt(ModeStateId, ToBusValue(value));
             }
         }
 
         [NonSerialized] public bool isReachDecelerationRateTarget;
 
-        [UdonSynced] [SerializeField] [HideInInspector]
-        private AutoBrakeMode _currentAutoBrakeMode = AutoBrakeMode.None;
+        [NonSerialized] private AutoBrakeMode _currentAutoBrakeMode = AutoBrakeMode.None;
+
+        private bool _isApplyingBusMode;
 
         private const float _lowBrakeDecelerationRate = -1.7f; // -1.7m/s²
         private const float _medBrakeDecelerationRate = -3f; // -3m/s²
+
+        #region FlightMenu bridge
+
+        /// <summary>档位状态本身，由 AutoBrakeAvionicsBusSync 做网络同步。</summary>
+        private const AvionicsBusIntDataIds ModeStateId =
+            AvionicsBusIntDataIds.V32NN_Infrequent_AutoBrake_Sync_Mode;
+
+        private const AvionicsBusBoolDataIds ActiveStatusId =
+            AvionicsBusBoolDataIds.V32NN_Infrequent_AutoBrake_Active;
+
+        private const AvionicsBusBoolDataIds ReachDecelTargetStatusId =
+            AvionicsBusBoolDataIds.V32NN_Infrequent_AutoBrake_ReachDecelTarget;
+
+        private bool _lastPublishedActive, _lastPublishedReachDecelerationRateTarget;
+        private bool _hasPublishedStatus;
+
+        protected override void _OnAvionicsBusPostStart()
+        {
+            // 不在初始化时主动跟随：总线默认值 0 就代表 Off，与系统初始档位一致
+            _SubscribeInt(ModeStateId, nameof(_OnBusModeChanged));
+        }
+
+        /// <summary>总线上的档位状态变化（本地改档或远端同步过来）→ 直接跟随。</summary>
+        public void _OnBusModeChanged()
+        {
+            _isApplyingBusMode = true;
+            currentAutoBrakeMode = FromBusValue(_ReadInt(ModeStateId));
+            _isApplyingBusMode = false;
+        }
+
+        // 总线编码：0=Off(None) 1=Low 2=Med 3=Max（0 作为默认值天然表示「未启用」）
+        private int ToBusValue(AutoBrakeMode mode)
+        {
+            switch (mode)
+            {
+                case AutoBrakeMode.Low:
+                    return 1;
+                case AutoBrakeMode.Med:
+                    return 2;
+                case AutoBrakeMode.Max:
+                    return 3;
+                default:
+                    return 0;
+            }
+        }
+
+        private AutoBrakeMode FromBusValue(int value)
+        {
+            switch (value)
+            {
+                case 1:
+                    return AutoBrakeMode.Low;
+                case 2:
+                    return AutoBrakeMode.Med;
+                case 3:
+                    return AutoBrakeMode.Max;
+                default:
+                    return AutoBrakeMode.None;
+            }
+        }
+
+        private void Update()
+        {
+            var active = isAutoBrakeActive;
+            var reachDecelerationRateTarget = isReachDecelerationRateTarget;
+
+            if (_hasPublishedStatus
+                && active == _lastPublishedActive
+                && reachDecelerationRateTarget == _lastPublishedReachDecelerationRateTarget)
+                return;
+
+            _hasPublishedStatus = true;
+            _lastPublishedActive = active;
+            _lastPublishedReachDecelerationRateTarget = reachDecelerationRateTarget;
+
+            _WriteAndNotifyBool(ActiveStatusId, active);
+            _WriteAndNotifyBool(ReachDecelTargetStatusId, reachDecelerationRateTarget);
+        }
+
+        #endregion
 
         private void Start()
         {

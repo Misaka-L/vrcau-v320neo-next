@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using JetBrains.Annotations;
 using SaccFlightAndVehicles;
 using UdonSharp;
@@ -46,8 +46,8 @@ namespace VAU.V320NeoNext.Runtime.Systems.AutoFlight
         private bool func_active;
         private bool Piloting;
 
-        [NonSerialized] [PublicAPI] public bool holdIncreaseTargetSpeed;
-        [NonSerialized] [PublicAPI] public bool holdDecreaseTargetSpeed;
+        // 「+ / -」的长按由 AutoThrustFlightMenuController 解读成**目标速度**后直接写
+        // V32NN_Infrequent_FCU_Sync_SelectedAirspeedInKt；本系统只读这个 id，不感知原始输入。
 
         private const float MeterToKt = 1.9438445f;
         private const float KtToMeter = 0.514444f;
@@ -59,7 +59,52 @@ namespace VAU.V320NeoNext.Runtime.Systems.AutoFlight
         protected override void _OnAvionicsBusStart()
         {
             SetSpeed = 194;
+
+            // FlightMenu bridge 的命令入口。接通状态只在 owner 本地有意义，
+            // 因此在总线上**不做网络同步**：谁按谁本地应用，只有飞机 owner 会生效。
+            _SubscribeBool(AvionicsBusBoolDataIds.V32NN_Infrequent_AutoThrust_EngageRequest,
+                nameof(_OnEngageRequested));
         }
+
+        #region FlightMenu bridge
+
+        private bool _hasPublishedAutoThrustState;
+        private bool _lastPublishedCruise, _lastPublishedArmed;
+
+        /// <summary>
+        /// 目标接通状态由 bridge 解读「Toggle A/THR」后写出。
+        /// 命令只由飞机 owner 处理；如何到达目标（先预位、起飞后自动接通）仍由本系统决定。
+        /// </summary>
+        public void _OnEngageRequested()
+        {
+            if (!_ReadBool(AvionicsBusBoolDataIds.Sim_Infrequent_HaveAircraftOwnership)) return;
+
+            var requested = _ReadBool(AvionicsBusBoolDataIds.V32NN_Infrequent_AutoThrust_EngageRequest);
+            if (requested)
+            {
+                if (isAutoThrustArm || Cruise) return;
+                isAutoThrustArm = true;
+                return;
+            }
+
+            isAutoThrustArm = false;
+            SetCruiseOff();
+        }
+
+        private void Update()
+        {
+            if (_hasPublishedAutoThrustState && Cruise == _lastPublishedCruise && isAutoThrustArm == _lastPublishedArmed)
+                return;
+
+            _hasPublishedAutoThrustState = true;
+            _lastPublishedCruise = Cruise;
+            _lastPublishedArmed = isAutoThrustArm;
+
+            _WriteAndNotifyBool(AvionicsBusBoolDataIds.V32NN_Infrequent_AutoThrust_Cruise, Cruise);
+            _WriteAndNotifyBool(AvionicsBusBoolDataIds.V32NN_Infrequent_AutoThrust_Armed, isAutoThrustArm);
+        }
+
+        #endregion
 
         protected override void _OnAvionicsBusRespawnByLocalPlayer()
         {
@@ -173,8 +218,8 @@ namespace VAU.V320NeoNext.Runtime.Systems.AutoFlight
             }
 
             float DeltaTime = Time.deltaTime;
-            var isIncreaseKeyPressed = holdIncreaseTargetSpeed || Input.GetKey(increaseSpeedKey);
-            var isDecreaseKeyPressed = holdDecreaseTargetSpeed || Input.GetKey(decreaseSpeedKey);
+            var isIncreaseKeyPressed = Input.GetKey(increaseSpeedKey);
+            var isDecreaseKeyPressed = Input.GetKey(decreaseSpeedKey);
 
             if (isDecreaseKeyPressed || isIncreaseKeyPressed)
             {

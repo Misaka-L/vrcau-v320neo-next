@@ -1,13 +1,13 @@
-﻿using System;
+using System;
 using JetBrains.Annotations;
 using UdonSharp;
 using UnityEngine;
 using VAU.V320NeoNext.Runtime.Bus;
 
-namespace VAU.V320NeoNext.Runtime.InputSystem.Shared
+namespace VAU.V320NeoNext.Runtime.InputSystem.FlightMenuController.LandingGear
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
-    public sealed class LandingGearController : AbstractAvionicsBusClient
+    public sealed class LandingGearFlightMenuController : AbstractAvionicsBusClient
     {
         public KeyCode toggleGearKey = KeyCode.G;
 
