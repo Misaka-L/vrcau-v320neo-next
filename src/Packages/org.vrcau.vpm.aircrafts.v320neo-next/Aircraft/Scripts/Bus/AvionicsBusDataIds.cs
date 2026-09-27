@@ -48,10 +48,11 @@ namespace VAU.V320NeoNext.Runtime.Bus
         // 襟翼移动期间每帧都会变：只写不 Notify，由 FlapFlightMenuController 轮询后自行算状态文本
         V32NN_Frequent_Flap_SlatAngle,
         V32NN_Frequent_Flap_FlapAngle,
-        V32NN_Frequent_ElevatorTrim_TrimPosition,
-        // 目标配平位置：bridge 解读用户输入后写出的「系统需要的值」。
-        // 每帧都会变化（长按配平），所以是 Frequent + 只写不 Notify，消费方轮询。
-        V32NN_Frequent_ElevatorTrim_TargetTrim,
+        // 配平位置（-1~1）：总线上的这个变量就是配平状态本身。
+        // 自动配平控制律、桌面按键与菜单 bridge（ElevatorTrimFlightMenuController）都直接写它，
+        // 非 owner 读到的是网络同步下来的值。每帧都可能变化，所以只写不 Notify，消费方轮询；
+        // 网络镜像由 ElevatorTrimAvionicsBusContinuousSync 负责。
+        V32NN_Frequent_ElevatorTrim_Sync_TrimPosition,
 
         // Avionics Bus
         Count
@@ -139,8 +140,8 @@ namespace VAU.V320NeoNext.Runtime.Bus
         V32NN_Infrequent_AutoStart_IndicatorActivated,
 
         // ATA27. Flight Control / Elevator Trim (FlightMenu)
+        // Auto Trim 状态本身（总线即状态），由 ElevatorTrimAvionicsBusSync 做网络同步
         V32NN_Infrequent_ElevatorTrim_Sync_AutoTrimActive,
-        V32NN_Frequent_ElevatorTrim_AutoTrimActive,
 
         // ATA22. Auto Flight / Auto Thrust (FlightMenu)
         // Engage 只是「按了一次 Toggle A/THR」的目标状态：接通状态只在 owner 本地有意义，
