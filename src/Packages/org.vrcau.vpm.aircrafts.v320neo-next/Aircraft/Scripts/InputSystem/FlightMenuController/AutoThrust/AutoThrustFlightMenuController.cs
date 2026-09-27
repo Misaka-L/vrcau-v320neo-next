@@ -12,6 +12,9 @@ namespace VAU.V320NeoNext.Runtime.InputSystem.FlightMenuController.AutoThrust
     /// <para>
     /// 「+ / -」的长按由本类解读成**目标速度**这一个数值，直接写
     /// <c>V32NN_Infrequent_FCU_Sync_SelectedAirspeedInKt</c>（系统本来就读这个 id），不使用 pulse。
+    /// 长按不依赖 holdStateVariableName：菜单项通过 holdContinuousEventName 在按住期间每帧
+    /// 发送自定义事件（<see cref="_OnTargetSpeedHoldIncrease"/> / <see cref="_OnTargetSpeedHoldDecrease"/>），
+    /// 因此本类不需要 Update()。
     /// </para>
     /// <para>
     /// Toggle A/THR 由本类解读成**目标接通状态** <c>V32NN_Infrequent_AutoThrust_Sync_Engage</c>：
@@ -21,10 +24,6 @@ namespace VAU.V320NeoNext.Runtime.InputSystem.FlightMenuController.AutoThrust
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public sealed class AutoThrustFlightMenuController : AbstractAvionicsBusClient
     {
-        // 菜单项 holdStateVariableName
-        [NonSerialized] public bool holdIncreaseTargetSpeed;
-        [NonSerialized] public bool holdDecreaseTargetSpeed;
-
         // 菜单项 isActivatedVariableName
         [NonSerialized] public bool Cruise;
 
@@ -69,21 +68,30 @@ namespace VAU.V320NeoNext.Runtime.InputSystem.FlightMenuController.AutoThrust
             SetSpeed = _ReadInt(SelectedAirspeedId);
         }
 
-        private void Update()
+        /// <summary>菜单项 holdStartEventName（+ / - 共用）：丢弃上一次长按残留的累加量。</summary>
+        public void _OnTargetSpeedHoldStart()
         {
-            var isIncrease = holdIncreaseTargetSpeed;
-            var isDecrease = holdDecreaseTargetSpeed;
+            _speedAccumulator = 0f;
+        }
 
-            if (!isIncrease && !isDecrease)
-            {
-                _speedAccumulator = 0;
-                return;
-            }
+        /// <summary>菜单项 holdContinuousEventName（+）：按住期间每帧上调目标速度。</summary>
+        public void _OnTargetSpeedHoldIncrease()
+        {
+            ApplyHoldStep(1f);
+        }
 
-            var direction = 0f;
-            if (isIncrease) direction += 1f;
-            if (isDecrease) direction -= 1f;
+        /// <summary>菜单项 holdContinuousEventName（-）：按住期间每帧下调目标速度。</summary>
+        public void _OnTargetSpeedHoldDecrease()
+        {
+            ApplyHoldStep(-1f);
+        }
 
+        /// <summary>
+        /// 由 FlightMenu 的持续 hold 事件每帧调用，把 <see cref="speedRatePerSecond"/> 按
+        /// <c>Time.deltaTime</c> 累加，攒够 1 kt 才写总线，保证结果与帧率无关。
+        /// </summary>
+        private void ApplyHoldStep(float direction)
+        {
             _speedAccumulator += speedRatePerSecond * Time.deltaTime * direction;
 
             var deltaKt = Mathf.RoundToInt(_speedAccumulator);
