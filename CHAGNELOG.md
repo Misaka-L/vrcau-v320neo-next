@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Assets like models, sounds and texture are moved into separated package.
   - Upgrade aircraft system won't require re-download all assets.
   - No Git LFS required. (Save budge for us and avoid trouble of manage Git LFS objects in Github)
+- A/THR target speed hold on the flight-menu now uses the menu item's continuous hold event; `AutoThrustFlightMenuController` no longer needs a per-frame `Update()`.
 
 ### Added
 
