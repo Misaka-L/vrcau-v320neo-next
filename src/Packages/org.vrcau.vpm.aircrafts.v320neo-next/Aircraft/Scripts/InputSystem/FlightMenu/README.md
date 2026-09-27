@@ -70,35 +70,77 @@ v320neo-next/SaccEntity/Systems/EnableInVehicle/AvioncsFlightMenu/
 `FlightMenuRadioController.Start()` 会调用 `transceiver.OnUpdateChannel()`，
 需要等 `SFEXT_URC_VHF` 先完成初始化。
 
-机组菜单本体在 `v320neo-next/SaccEntity/Systems/FlightMenuGroup/Pilot/`，
-里面只保留不属于任何系统的条目（`Cabin Door`、`Landing Light`、`[Empty]` 占位、`Next Page` 分组）。
+机组菜单本体在 `v320neo-next/SaccEntity/Systems/FlightMenuGroup/Pilot/`
+（`Desktop` / `Next Page` / `VR Left Hand` / `VR Right Hand`）。
 
-## 给某个机组加/删系统菜单
+## 机组菜单如何引用系统菜单
 
-1. 把 `EnableInVehicle/AvioncsFlightMenu/<系统>` 实例拖到该机组菜单节点下（若该实例已被删除），
-   或直接复用现有实例。
-2. 编辑该机组 `FlightMenuGroup.menuItems`，在想要的顺序位置插入/移除对
-   `<系统>/Entries/<入口项>` 的引用。
-3. 若新增了实例或改了数组，务必让 UdonSharp 重新序列化 proxy：
-   `UdonSharpEditorUtility.CopyProxyToUdon(group)`（在 Inspector 里手动改会自动完成）。
+机组菜单节点的**子对象就是菜单内容本身**，运行时用的 `menuItems` 数组由子对象**扫描生成**：
+
+- 系统条目在机组菜单下表现为一个 **`FlightMenuReferenceItem`** 子对象（挂在 `<系统>FlightMenu.prefab`
+  实例外面，名字就是菜单标题，如 `Trim` / `A/THR` / `Park Brake`）。
+  它只有一个 `targetMenuItem` 字段，指向 `EnableInVehicle/AvioncsFlightMenu/<系统>/Entries/<入口项>`。
+  引用项自己的 title / eventTarget 等字段一律忽略。
+- `Cabin Door`、`Landing Light`、`[Empty]`、`Next Page` 仍是本机自己的菜单项，直接挂在同一个组下面。
+- **同级顺序 = 菜单顺序**。
+
+举例（`Desktop`）：
+
+```
+Desktop                        FlightMenuGroup
+├ Auto Start                   FlightMenuReferenceItem -> AutoStart/Entries/Entry
+├ Cabin Door                   FlightMenuButtonItem    (本机)
+├ Trim                         FlightMenuReferenceItem -> ElevatorTrim/Entries/Entry
+├ VHF                          FlightMenuReferenceItem -> VHF/Entries/Entry
+├ Landing Gear                 FlightMenuReferenceItem -> LandingGear/Entries/Entry
+├ A/THR                        FlightMenuReferenceItem -> AutoThrust/Entries/Entry
+├ Flaps                        FlightMenuReferenceItem -> Flap/Entries/Entry
+├ Park Brake                   FlightMenuReferenceItem -> Brake/Entries/Entry
+└ Next Page                    FlightMenuSubMenuItem + FlightMenuGroup
+  ├ Landing Light              FlightMenuButtonItem    (本机)
+  ├ Auto Brake                 FlightMenuReferenceItem -> AutoBrake/Entries/Entry
+  └ Seat Adjust                FlightMenuReferenceItem -> SeatAdjust/Entries/Entry
+```
+
+## 给某个机组加/删/调整系统菜单
+
+1. 在目标机组 `FlightMenuGroup` 下增删 `FlightMenuReferenceItem` 子对象，并把它们拖到想要的同级位置。
+   - Inspector 上 `FlightMenuGroup` 的右键菜单里有 **Reference**，会新建一个空引用项；
+     也可以复制现有的引用项再改 `targetMenuItem`。
+   - 填 `targetMenuItem`：从 `EnableInVehicle/AvioncsFlightMenu/<系统>/Entries/` 里拖。
+2. 选中该 `FlightMenuGroup`，按 Inspector 上的 **Scan child menu item update**，
+   让 `menuItems` 重新由子对象生成（引用项会被展开成它指向的真实菜单项）。
+3. 如果扫描不是通过 Inspector 做的（例如脚本调用
+   `FlightMenuGroupEditor.ScanChildMenuItem(group)`），记得再调一次
+   `UdonSharpEditorUtility.CopyProxyToUdon(group)` 同步 Udon 侧序列化。
+
+**注意**：`Reference Item` 只在**编辑器扫描时**生效，运行期的 `FlightMenuView` 并不会解引用。
+所以改完子对象一定要重新 Scan，否则运行时用的还是旧的 `menuItems`。
 
 同一条目可以被多个机组共用：`FlightMenuItemBase` 是纯配置、无运行期状态
 （滑块状态在 `FlightMenuSliderController`，它每个 MenuView 一份）。
+因此一个 `Entries/Entry` 可以被多个机组的引用项同时指向，Controller 全机仍然只有一份。
 
 ## 给某个系统加一个新的入口变体
 
 例：想让副驾驶用一个标题不同的 A/THR 入口。
 
 1. 在 `AutoThrustFlightMenu.prefab` 的 `Entries/` 下复制 `Entry`，改名（如 `EntryFO`），改标题等参数。
-2. 在副驾驶的 `FlightMenuGroup.menuItems` 里引用它。
+2. 在副驾驶的 `FlightMenuGroup` 下加一个 `FlightMenuReferenceItem`，`targetMenuItem` 指向 `EntryFO`，
+   然后 Scan。
 
 这样每个机组可以有自己的入口参数，而 Controller 全机仍然只有一份。
 
 ## 修改时的注意事项
 
+- **`menuItems` 是派生的**：机组菜单的 `menuItems` 由子对象扫描生成，不要手工去改数组。
+  改了子对象（增删、改顺序、改 `targetMenuItem`）就必须重新 Scan，否则运行期菜单不会变。
 - **UdonSharp 双份序列化**：`FlightMenuGroup.menuItems` 等字段既存在于 proxy `MonoBehaviour`，
   也序列化进 `UdonBehaviour`（`publicVariablesUnityEngineObjects` + 变量 blob）。
   用脚本改完数组后必须调用 `UdonSharpEditorUtility.CopyProxyToUdon(...)`，否则运行时读到的还是旧值。
+- **引用项会随构建发布**：`FlightMenuReferenceItem` 继承自 `FlightMenuItemBase`，不是 `IEditorOnly`，
+  所以每个引用项在运行时也是一个（永远用不到的）UdonBehaviour。目前 4 个机组共 19 个。
+  如果想省掉这部分开销，需要在 flight-menu 包里把它标记成编辑器专用。
 - **prefab 之间不能互相指向内部对象**：prefab 资产只能引用别的**资产**。
   `VhfFlightMenu.prefab` 里 `RadioGroup/MenuController.transceiver` 是空的，真实值是在飞机 prefab 里
   对 `VHF` 实例做的**外层覆盖**（指向 `SaccEntity/Systems/ATA23-Communication/Radio/VHF/SFEXT_URC_VHF`）。
