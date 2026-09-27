@@ -3,6 +3,7 @@ using JetBrains.Annotations;
 using SaccFlightAndVehicles;
 using UdonSharp;
 using UnityEngine;
+using VAU.V320NeoNext.Runtime.Bus;
 using VAU.V320NeoNext.Runtime.Systems.LegacyFlightDataProvider;
 
 //note:this code is original from https://github.com/esnya/EsnyaSFAddons
@@ -11,8 +12,20 @@ using VAU.V320NeoNext.Runtime.Systems.LegacyFlightDataProvider;
 //2024-09-29 尝试一个新东西，先把这个脚本作用在JoystickOverridde上，（FBW？）
 namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.SaccExt
 {
-    [UdonBehaviourSyncMode(BehaviourSyncMode.Continuous)]
-    public class DFUNC_a320_ElevatorTrim : UdonSharpBehaviour
+    /// <summary>
+    /// 俯仰配平系统，直接读写航电总线。配平位置与 Auto Trim 都没有第二份状态：
+    /// <list type="bullet">
+    /// <item><description><see cref="Trim"/> 就是总线上的
+    /// <c>V32NN_Frequent_ElevatorTrim_Sync_TrimPosition</c>：本系统的控制律与桌面按键写它，
+    /// 菜单 bridge 的手动配平也直接写同一个变量，非 owner 读到的是网络同步下来的值；</description></item>
+    /// <item><description><see cref="AutoTrimActive"/> 就是总线上的
+    /// <c>V32NN_Infrequent_ElevatorTrim_Sync_AutoTrimActive</c>。</description></item>
+    /// </list>
+    /// 网络镜像由 <see cref="ElevatorTrimAvionicsBusContinuousSync"/>（配平位置，Continuous）与
+    /// <see cref="ElevatorTrimAvionicsBusSync"/>（Auto Trim 状态，Manual）负责，本系统自己不做网络同步。
+    /// </summary>
+    [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
+    public class DFUNC_a320_ElevatorTrim : AbstractAvionicsBusClient
     {
         public YFI_FlightDataInterface BasicFlightData;
         public RadioAltimeter.RadioAltimeter radioAltimeter;
@@ -24,11 +37,21 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.SaccExt
         //[Range(0, 50)] public float trimBias = 8;
         private float prevTrim;
 
-        // 配平的手动输入由 ElevatorTrimFlightMenuController 解读成**目标配平位置**后写到
-        // V32NN_Infrequent_ElevatorTrim_Sync_Trim；本系统只接收数值，不感知 hold 与按键。
+        // 配平的手动输入由 ElevatorTrimFlightMenuController 解读成配平位置后**直接写总线状态**
+        // （V32NN_Frequent_ElevatorTrim_Sync_TrimPosition），本系统不需要再消费什么目标值。
 
         public float initialTrim = 0.3f;
-        [UdonSynced] public float trim; //当前配平位置，-1~1
+
+        /// <summary>
+        /// 当前配平位置（-1~1）。总线上的变量就是唯一状态：owner 写的值直接进总线，
+        /// 非 owner 由 <see cref="ElevatorTrimAvionicsBusContinuousSync"/> 收到网络值后写回总线，这里只读。
+        /// </summary>
+        public float Trim
+        {
+            get => _ReadFloat(TrimPositionId);
+            set => _WriteFloat(TrimPositionId, value);
+        }
+
         public float critiaclAOA = 20f; //临界攻角，sav.pitchaoa低于该数值时，触发afloorProtect;
 
         [Header("controller")] public float targetLoadFactor = 1;
@@ -57,8 +80,16 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.SaccExt
         [Tooltip("0-直接法则 1-飞行模式 2-地面模式 3-拉平模式")]
         public int trimMode = 1; //0-直接法则 1-飞行模式 2-地面模式 3-拉平模式
 
-        public bool
-            autoTrimActive; //当侧杆(SFEXT_O_JoystickGrabbed/SFEXT_O_JoystickDropped)以及AP(JoystickOverride)无输入时，配平才激活
+        /// <summary>
+        /// Auto Trim 是否激活。总线上的变量就是唯一状态，网络同步由
+        /// <see cref="ElevatorTrimAvionicsBusSync"/> 负责。
+        /// 当侧杆(SFEXT_O_JoystickGrabbed/SFEXT_O_JoystickDropped)以及AP(JoystickOverride)无输入时，配平才激活。
+        /// </summary>
+        public bool AutoTrimActive
+        {
+            get => _ReadBool(AutoTrimActiveId);
+            set => _WriteAndNotifyBool(AutoTrimActiveId, value);
+        }
 
         public bool TrimActiveLastFrame = false;
         public bool afloorProtect = false;
@@ -69,7 +100,8 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.SaccExt
         private void ResetStatus()
         {
             trimMode = 0;
-            prevTrim = trim = initialTrim;
+            Trim = initialTrim; // 总线即状态，写进去就是当前配平位置
+            prevTrim = initialTrim;
             if (vehicleAnimator) vehicleAnimator.SetFloat(animatorParameterName, .5f);
             //SAVControl.SetProgramVariable("VelLiftStart", trimStrength* trim + trimBias);
             vehicleRigidbody = SAVControl.VehicleRigidbody;
@@ -90,7 +122,7 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.SaccExt
             var pitchInputs = SAVControl.RotationInputs.x;
 
             //飞行模式
-            if (autoTrimActive &&
+            if (AutoTrimActive &&
                 !SAVControl.Taxiing &&
                 radioAltimeter.radioAltitude >= 50)
             {
@@ -103,7 +135,7 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.SaccExt
 
                 if (SAVControl.JoystickOverridden != 0)
                 {
-                    trim = initialTrim;
+                    Trim = initialTrim;
                 }
                 else
                 {
@@ -137,13 +169,13 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.SaccExt
                     }
 
                     //trim = Mathf.MoveTowards(trim, Mathf.Clamp(kp * TrimError + ki * TrimErrorIntergrate, -1, 1), 0.1f);
-                    trim = Mathf.Clamp(kp * TrimError + ki * TrimErrorIntergrate + kd * TrimErrorDerivative, -1, 1);
+                    Trim = Mathf.Clamp(kp * TrimError + ki * TrimErrorIntergrate + kd * TrimErrorDerivative, -1, 1);
                     TrimErrorLastFrame = TrimError;
                 }
             }
 
             //地面模式
-            else if (autoTrimActive && SAVControl.Taxiing)
+            else if (AutoTrimActive && SAVControl.Taxiing)
             {
                 if (trimMode != 2)
                 {
@@ -152,12 +184,12 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.SaccExt
                     Debug.Log("[FBW]Ground Mode");
                 }
 
-                trim = initialTrim;
+                Trim = initialTrim;
                 targetLoadFactor = StickInputtoLoadFactor(pitchInputs, DeltaTime);
             }
 
             //拉平模式
-            else if (autoTrimActive &&
+            else if (AutoTrimActive &&
                      radioAltimeter.radioAltitude < 50 &&
                      !SAVControl.Taxiing &&
                      BasicFlightData.verticalSpeed < -0.6 &&
@@ -168,7 +200,7 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.SaccExt
                 {
                     trimMode = 3;
                     Debug.Log("[FBW]Touchdown Mode");
-                    targetTrim = trim - 0.05f;
+                    targetTrim = Trim - 0.05f;
                 }
 
                 //俯仰角控制率
@@ -180,7 +212,7 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.SaccExt
                 trim = Mathf.Clamp(kp * TrimError + ki * TrimErrorIntergrate + kd * TrimErrorDerivative, -1, 1);
                 */
                 TrimError = TrimErrorIntergrate = TrimErrorDerivative = 0f;
-                trim = Mathf.MoveTowards(trim, targetTrim, DeltaTime * 0.025f);
+                Trim = Mathf.MoveTowards(Trim, targetTrim, DeltaTime * 0.025f);
             }
         }
 
@@ -247,8 +279,8 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.SaccExt
 
         private void LocalUpdate()
         {
-            var trimChanged = !Mathf.Approximately(trim, prevTrim);
-            prevTrim = trim;
+            var trimChanged = !Mathf.Approximately(Trim, prevTrim);
+            prevTrim = Trim;
             if (trimChanged)
             {
                 DoTrimAnimatorAndUiUpdate();
@@ -258,11 +290,29 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.SaccExt
         private void DoTrimAnimatorAndUiUpdate()
         {
             SetDirty();
-            if (vehicleAnimator) vehicleAnimator.SetFloat(animatorParameterName, Remap01(trim, -1, 1));
+            if (vehicleAnimator) vehicleAnimator.SetFloat(animatorParameterName, Remap01(Trim, -1, 1));
             //SAVControl.SetProgramVariable("VelLiftStart", trim * trimStrength + trimBias);
 
-            trimDisplayString = $"{(trim > 0 ? "UP" : "DOWN")} {Mathf.Abs(trim):f2}";
+            trimDisplayString = $"{(Trim > 0 ? "UP" : "DOWN")} {Mathf.Abs(Trim):f2}";
         }
+
+        #region AvionicsBus
+
+        private const AvionicsBusFloatDataIds TrimPositionId =
+            AvionicsBusFloatDataIds.V32NN_Frequent_ElevatorTrim_Sync_TrimPosition;
+
+        /// <summary>Auto Trim 状态本身（总线即状态，读写同一个 id）。</summary>
+        private const AvionicsBusBoolDataIds AutoTrimActiveId =
+            AvionicsBusBoolDataIds.V32NN_Infrequent_ElevatorTrim_Sync_AutoTrimActive;
+
+        protected override void _OnAvionicsBusStart()
+        {
+            // 总线是唯一状态，开局先放上系统初始配平：非 owner 在收到第一个网络包之前不会是 0。
+            // Auto Trim 的初值由 ElevatorTrimAvionicsBusSync 启动时放进总线，这里不重复写。
+            _WriteFloat(TrimPositionId, initialTrim);
+        }
+
+        #endregion
 
         private void FixedUpdate()
         {
@@ -275,7 +325,7 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.SaccExt
 
             var rotlift = Mathf.Clamp(SAVControl.AirSpeed / rotMultiMaxSpeed, -1, 1);
             //var DeltaTime = Time.fixedDeltaTime;
-            var trimForce = (trim * SAVControl.PitchStrength) * rotlift * SAVControl.Atmosphere * 
+            var trimForce = (Trim * SAVControl.PitchStrength) * rotlift * SAVControl.Atmosphere * 
                             -SAVControl.VehicleTransform.up;
             trimForce *= vehicleRigidbody.mass;
             vehicleRigidbody.AddForceAtPosition(trimForce, pitchForcePosition.position, ForceMode.Force);
@@ -301,26 +351,20 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.SaccExt
 
         public void _TrimUp()
         {
-            trim += desktopStep;
+            Trim += desktopStep;
         }
 
         public void _TrimDown()
         {
-            trim -= desktopStep;
+            Trim -= desktopStep;
         }
 
         public void _ToggleAutoTrim()
         {
-            if (!autoTrimActive)
-            {
-                autoTrimActive = true;
-                Debug.Log("[FBW]AUTO TRIM");
-            }
-            else
-            {
-                autoTrimActive = false;
-                Debug.Log("[FBW]MAN TRIM");
-            }
+            // 总线即状态：直接改总线上的变量（带 Notify，ElevatorTrimAvionicsBusSync 负责同步出去）
+            AutoTrimActive = !AutoTrimActive;
+
+            Debug.Log(AutoTrimActive ? "[FBW]AUTO TRIM" : "[FBW]MAN TRIM");
 
             TrimError = 0;
             TrimErrorIntergrate = 0;
@@ -406,8 +450,8 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.SaccExt
         {
             if (!isPilot) return;
 
-            if (Input.GetKeyDown(desktopUp)) _TrimUp();
-            if (Input.GetKeyDown(desktopDown)) _TrimDown();
+            if (Input.GetKey(desktopUp)) _TrimUp();
+            if (Input.GetKey(desktopDown)) _TrimDown();
 
             if (Input.GetKeyDown(desktopEnableAuto)) _ToggleAutoTrim();
         }

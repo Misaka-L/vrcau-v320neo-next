@@ -12,13 +12,14 @@ namespace VAU.V320NeoNext.Runtime.InputSystem.FlightMenuController.ElevatorTrim
     /// <para>
     /// 菜单的 Pitch Up / Down 同时具备「单击步进」（triggerEventName = _TrimUp / _TrimDown）
     /// 与「长按连续配平」（holdStateVariableName = isTrimUpHold / isTrimDownHold）。
-    /// 两类输入都由本类解读成**目标配平位置**这一个数值写到总线
-    /// （<c>V32NN_Frequent_ElevatorTrim_TargetTrim</c>），不使用 pulse；
+    /// 两类输入都由本类解读成**配平位置**这一个数值，直接写到总线上的配平状态
+    /// （<c>V32NN_Frequent_ElevatorTrim_Sync_TrimPosition</c>），不使用 pulse；
     /// 飞机系统只接收数值，不感知 hold 与按键。
     /// </para>
     /// <para>
-    /// 目标配平位置在长按时每帧都变，因此只写不 Notify，由 Adapter 轮询；
-    /// 配平显示值同理，由本类轮询读取。
+    /// 配平位置在长按时每帧都变，因此只写不 Notify，由系统与 BusSync 轮询；
+    /// 配平显示值与 Auto Trim 状态同理，由本类轮询读取；两者的网络同步由
+    /// ElevatorTrimAvionicsBusContinuousSync / ElevatorTrimAvionicsBusSync 负责。
     /// </para>
     /// </summary>
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
@@ -47,17 +48,13 @@ namespace VAU.V320NeoNext.Runtime.InputSystem.FlightMenuController.ElevatorTrim
         private bool _lastAutoTrimActive;
         private float _lastTrim;
 
-        private const AvionicsBusBoolDataIds AutoTrimActiveRequestId =
+        /// <summary>Auto Trim 状态本身（总线即状态，读写同一个 id）。</summary>
+        private const AvionicsBusBoolDataIds AutoTrimActiveId =
             AvionicsBusBoolDataIds.V32NN_Infrequent_ElevatorTrim_Sync_AutoTrimActive;
 
-        private const AvionicsBusFloatDataIds TrimRequestId =
-            AvionicsBusFloatDataIds.V32NN_Frequent_ElevatorTrim_TargetTrim;
-
-        private const AvionicsBusBoolDataIds AutoTrimActiveStatusId =
-            AvionicsBusBoolDataIds.V32NN_Frequent_ElevatorTrim_AutoTrimActive;
-
+        /// <summary>配平位置本身（总线即状态，本类直接写、轮询读）。</summary>
         private const AvionicsBusFloatDataIds TrimPositionId =
-            AvionicsBusFloatDataIds.V32NN_Frequent_ElevatorTrim_TrimPosition;
+            AvionicsBusFloatDataIds.V32NN_Frequent_ElevatorTrim_Sync_TrimPosition;
 
         private void Update()
         {
@@ -67,7 +64,7 @@ namespace VAU.V320NeoNext.Runtime.InputSystem.FlightMenuController.ElevatorTrim
 
         private void UpdateStatus()
         {
-            var autoTrim = _ReadBool(AutoTrimActiveStatusId);
+            var autoTrim = _ReadBool(AutoTrimActiveId);
             var trim = _ReadFloat(TrimPositionId);
 
             if (_hasReadStatus && autoTrim == _lastAutoTrimActive && Mathf.Approximately(trim, _lastTrim)) return;
@@ -102,13 +99,18 @@ namespace VAU.V320NeoNext.Runtime.InputSystem.FlightMenuController.ElevatorTrim
             if (isUp) _pendingTrim += delta;
             if (isDown) _pendingTrim -= delta;
 
-            WriteTrimTarget(_pendingTrim);
+            WriteTrim(_pendingTrim);
         }
 
-        private void WriteTrimTarget(float trim)
+        /// <summary>
+        /// 直接写总线上的配平状态（<c>V32NN_Frequent_ElevatorTrim_Sync_TrimPosition</c>）：
+        /// 菜单不需要经过一层「目标配平位置」，飞机系统与 BusSync 都从这个变量上读。
+        /// 只写不 Notify，消费方轮询。
+        /// </summary>
+        private void WriteTrim(float trim)
         {
             _pendingTrim = Mathf.Clamp(trim, -1f, 1f);
-            _WriteFloat(TrimRequestId, _pendingTrim);
+            _WriteFloat(TrimPositionId, _pendingTrim);
         }
 
         // 菜单项 triggerEventName（单击步进）
@@ -133,13 +135,14 @@ namespace VAU.V320NeoNext.Runtime.InputSystem.FlightMenuController.ElevatorTrim
                 _hasPendingTrim = true;
             }
 
-            WriteTrimTarget(_pendingTrim + step);
+            WriteTrim(_pendingTrim + step);
         }
 
         [PublicAPI]
         public void _ToggleAutoTrim()
         {
-            _WriteAndNotifyBool(AutoTrimActiveRequestId, !autoTrimActive);
+            // 总线即状态：直接取反总线上的值，不依赖本类轮询出来的镜像
+            _WriteAndNotifyBool(AutoTrimActiveId, !_ReadBool(AutoTrimActiveId));
         }
     }
 }
