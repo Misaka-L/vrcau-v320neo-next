@@ -177,10 +177,8 @@ namespace VAU.V320NeoNext.Runtime.Bus
     {
         V32NN_Frequent_ADR_VelocityNED = 0,
         V32NN_Infrequent_ND_WindVector = 1,
-        // Seat（每玩家本机，无 _Sync_）：座位相对初始位置的偏移。
-        // 总线上的这一个变量就是唯一状态：SeatAdjusterFlightMenuController 写，SeatAdjuster 读。
-        // 只在按住时改变，因此是 Infrequent，走事件通知（SeatAdjuster 不需要 Update）。
-        V32NN_Infrequent_Seat_Offset = 2,
-        Count = 3
+        // 座位调节（SeatAdjuster）不走总线：每个座位一份实例、状态在实例内部，
+        // 因此这里没有座位相关的数据 id。
+        Count = 2
     }
 }

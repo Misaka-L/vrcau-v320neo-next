@@ -18270,10 +18270,10 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 5281988694487502379}
-  _avionicsBus: {fileID: 0}
   adjustTargetInVr: {fileID: 7603465784415788919}
   adjustTargetInDesktop: {fileID: 8745606592310429560}
   adjustStep: 0.5
+  moveSpeed: 0.5
 --- !u!114 &5281988694487502379
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -132662,6 +132662,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1522877294853581108}
     m_Modifications:
+    - target: {fileID: 4504209500893045713, guid: 1606edd25cfff234fad27e95c4b91b7f, type: 3}
+      propertyPath: seatAdjuster
+      value: 
+      objectReference: {fileID: 3047419758396933996}
     - target: {fileID: 4546183567629718843, guid: 1606edd25cfff234fad27e95c4b91b7f, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
