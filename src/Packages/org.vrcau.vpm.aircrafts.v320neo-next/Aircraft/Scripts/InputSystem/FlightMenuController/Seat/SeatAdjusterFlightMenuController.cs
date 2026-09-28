@@ -1,75 +1,63 @@
 using JetBrains.Annotations;
 using UdonSharp;
-using UnityEngine;
-using VAU.V320NeoNext.Runtime.Bus;
+using VAU.V320NeoNext.Runtime.Systems.Seat;
 
 namespace VAU.V320NeoNext.Runtime.InputSystem.FlightMenuController.Seat
 {
     /// <summary>
-    /// FlightMenu 与 SeatAdjuster 之间的 bridge。
-    /// 只读写 AvionicsBus，不持有任何飞机系统引用。
+    /// FlightMenu 的「Seat Adjust」菜单项与某个座位 <see cref="SeatAdjuster"/> 之间的转发器。
     /// <para>
-    /// 菜单的 Move Up/Down/Forward/Backward 是「按住移动」，由本类解读成
-    /// **座位相对初始位置的偏移** 写到总线上的唯一一个变量
-    /// （<c>V32NN_Infrequent_Seat_Offset</c>）；<c>SeatAdjuster</c> 直接读这个变量，
-    /// 不维护第二份状态，也不需要每帧回发布。
+    /// 菜单项通过 <c>holdContinuousEventName</c> 每帧发送自定义事件，本类只把事件按名字转发给
+    /// <see cref="seatAdjuster"/>；自身不持有任何位移状态，也不依赖 AvionicsBus。
+    /// 按住期间不需要 <c>holdStateVariableName</c>，因此本类没有 Update()。
     /// </para>
     /// <para>
-    /// 按住期间由菜单项通过 holdContinuousEventName 每帧发送自定义事件，本类不依赖
-    /// holdStateVariableName，因此不需要 Update()。
+    /// **每个座位一份实例**：菜单 prefab 里本类的 <c>seatAdjuster</c> 是空的，由宿主 prefab
+    /// 对每个菜单实例做一次外层覆盖，指向该座位自己的 SeatAdjuster。
+    /// 座位之间互不共享状态，所以不能全机共用一份菜单实例（否则所有座位都会去动被引用的那一个）。
     /// </para>
     /// <para>座位调整是每玩家本机行为，无 <c>_Sync_</c>、无 Sync 类。</para>
     /// </summary>
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
-    public sealed class SeatAdjusterFlightMenuController : AbstractAvionicsBusClient
+    public sealed class SeatAdjusterFlightMenuController : UdonSharpBehaviour
     {
-        /// <summary>按住时的移动速度（米/秒）。</summary>
-        public float moveSpeed = 0.5f;
-
-        private const AvionicsBusVector3DataIds OffsetId =
-            AvionicsBusVector3DataIds.V32NN_Infrequent_Seat_Offset;
+        /// <summary>本菜单实例对应的座位调节器，由宿主 prefab 覆盖赋值。</summary>
+        public SeatAdjuster seatAdjuster;
 
         /// <summary>菜单项 holdContinuousEventName（Move Up）。</summary>
+        [PublicAPI]
         public void _OnHoldMoveUp()
         {
-            ApplyHoldMove(Vector3.up);
+            if (!seatAdjuster) return;
+
+            seatAdjuster._OnHoldMoveUp();
         }
 
         /// <summary>菜单项 holdContinuousEventName（Move Down）。</summary>
+        [PublicAPI]
         public void _OnHoldMoveDown()
         {
-            ApplyHoldMove(Vector3.down);
+            if (!seatAdjuster) return;
+
+            seatAdjuster._OnHoldMoveDown();
         }
 
         /// <summary>菜单项 holdContinuousEventName（Move Forward）。</summary>
+        [PublicAPI]
         public void _OnHoldMoveForward()
         {
-            ApplyHoldMove(Vector3.forward);
+            if (!seatAdjuster) return;
+
+            seatAdjuster._OnHoldMoveForward();
         }
 
         /// <summary>菜单项 holdContinuousEventName（Move Backward）。</summary>
+        [PublicAPI]
         public void _OnHoldMoveBackward()
         {
-            ApplyHoldMove(Vector3.back);
-        }
+            if (!seatAdjuster) return;
 
-        /// <summary>
-        /// 由 FlightMenu 的持续 hold 事件每帧调用：总线上的偏移量就是唯一状态，
-        /// 直接读它作为累加起点；只在按住时改变，所以走事件通知（SeatAdjuster 订阅 OffsetId）。
-        /// </summary>
-        private void ApplyHoldMove(Vector3 direction)
-        {
-            _WriteAndNotifyVector3(OffsetId, _ReadVector3(OffsetId) + direction * (moveSpeed * Time.deltaTime));
-        }
-
-        protected override void _OnAvionicsBusRespawnByLocalPlayer() => ResetOffset();
-
-        protected override void _OnAvionicsBusRespawnByRemotePlayer() => ResetOffset();
-
-        /// <summary>重生后座位回到初始位置，总线上的偏移量也要一起归零（本类是它唯一的写入方）。</summary>
-        private void ResetOffset()
-        {
-            _WriteAndNotifyVector3(OffsetId, Vector3.zero);
+            seatAdjuster._OnHoldMoveBackward();
         }
     }
 }

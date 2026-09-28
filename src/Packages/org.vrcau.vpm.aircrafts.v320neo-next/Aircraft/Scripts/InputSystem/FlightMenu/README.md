@@ -29,7 +29,8 @@ Aircraft/Scripts/InputSystem/FlightMenu/
 
 ```
 <Name>FlightMenu
-├ MenuController   <系统>FlightMenuController（桥接 AvionicsBus，无外部引用）
+├ MenuController   <系统>FlightMenuController（桥接 AvionicsBus，无外部引用；
+│                  SeatAdjust 例外：seatAdjuster 指向座位自己的 SeatAdjuster）
 ├ MenuGroup        FlightMenuGroup（该系统自己的子菜单；只有单条目系统没有这一层）
 │ └ ...            组内菜单项
 ├ RadioGroup       （仅 VHF）MenuGroupVHF.prefab 的嵌套实例，含 FlightMenuRadioController 与频率输入组
@@ -48,7 +49,7 @@ Aircraft/Scripts/InputSystem/FlightMenu/
 | `ElevatorTrimFlightMenu` | `Entries/Entry`（弹窗 "Trim"） | Desktop、VR Left Hand |
 | `LandingGearFlightMenu` | `Entries/Entry`（按钮 "Landing Gear"） | Desktop |
 |  | `Entries/EntryMenu`（弹窗 "Landing Gear"） | VR Right Hand |
-| `SeatAdjustFlightMenu` | `Entries/Entry`（弹窗 "Seat Adjust"） | Desktop 的 Page 2、VR Left Hand |
+| `SeatAdjustFlightMenu` | `Entries/Entry`（弹窗 "Seat Adjust"） | Desktop 的 Page 2、VR Left Hand（**每个座位一份实例**，见下） |
 | `BrakeFlightMenu` | `Entries/Entry`（按钮 "Park Brake"） | Desktop、VR Left Hand |
 | `AutoStartFlightMenu` | `Entries/Entry`（按钮 "Auto Start"） | Desktop、VR Left Hand |
 | `FlapFlightMenu` | `Entries/Entry`（滑块 "Flaps"） | Desktop、VR Right Hand |
@@ -131,6 +132,38 @@ Desktop                        FlightMenuGroup
 
 这样每个机组可以有自己的入口参数，而 Controller 全机仍然只有一份。
 
+## 座位调节（Seat Adjust）：每个座位一份实例
+
+`SeatAdjustFlightMenu` 与其它系统菜单的差别：它的 `MenuController`
+（`SeatAdjusterFlightMenuController`）**不经过 AvionicsBus**，而是持有一个
+`public SeatAdjuster seatAdjuster`，把 4 个 hold 事件转发给这个座位自己的
+`SeatAdjuster`（`Aircraft/Scripts/Systems/Seat/SeatAdjuster.cs`）。
+座位偏移是**每个实例自己的状态**，所以每个座位都要有自己的菜单实例：
+全机共用一份会让所有座位都去动被引用的那一个。
+
+给飞机加/改一个座位的座位调节：
+
+1. 复制 `SeatAdjuster` 节点到目标座位（现例：`Seats/SeatPilot/InSeatOnlyPilot/SeatAdjuster`），
+   把 `adjustTargetInVr` / `adjustTargetInDesktop` 指向该座位的
+   `StationEnterPlayerLocation` / `TargetEyePosition`；`moveSpeed`（按住移动速度，米/秒）与
+   `adjustStep`（`StepMove*` 的步进距离）按该座位需要设置。
+2. 把该节点放进该座位 `SaccVehicleSeat.EnableInSeat`，保持"本机只有所坐座位的
+   SeatAdjuster 是启用的"这一前提。
+3. 在 `EnableInVehicle/AvioncsFlightMenu/` 下复制一份 `SeatAdjust` 实例并改名
+   （如 `SeatAdjustCopilot`），把它的 `MenuController.seatAdjuster` 覆盖指向该座位的
+   `SeatAdjuster`。
+4. 在该座位的机组菜单下加一个 `FlightMenuReferenceItem`，`targetMenuItem` 指向新实例的
+   `Entries/Entry`，然后 Scan。（同一条目仍可被多个机组引用。）
+
+补充：
+
+- 座位调节不需要 AvionicsBus、也不读写任何总线数据 id，`SeatAdjuster` 可以直接复制到别的
+  飞机/载具（复制脚本 + 菜单 prefab 即可），每个座位互不影响。
+- 座位回到初始位置：给 `SeatAdjuster` 发 `ResetAdjustment`。脚本**不自动归零**
+  （原来由 AvionicsBus 的重生事件触发），重生/离座/换座位要不要归零由宿主决定。
+- 菜单项 `eventTarget` 仍只指向自己 prefab 内的 `MenuController`；跨 prefab 的引用只有
+  `seatAdjuster` 这一个。
+
 ## 修改时的注意事项
 
 - **`menuItems` 是派生的**：机组菜单的 `menuItems` 由子对象扫描生成，不要手工去改数组。
@@ -145,6 +178,8 @@ Desktop                        FlightMenuGroup
   `VhfFlightMenu.prefab` 里 `RadioGroup/MenuController.transceiver` 是空的，真实值是在飞机 prefab 里
   对 `VHF` 实例做的**外层覆盖**（指向 `SaccEntity/Systems/ATA23-Communication/Radio/VHF/SFEXT_URC_VHF`）。
   重建实例后别忘了恢复这个覆盖。
+  同理 `SeatAdjustFlightMenu.prefab` 里 `MenuController.seatAdjuster` 是空的，真实值是在飞机 prefab 里
+  对该 `SeatAdjust` 实例做的外层覆盖（指向该座位自己的 `SeatAdjuster`）。
 - `VhfFlightMenu.prefab` 依赖 `org.vrcau.vpm.systems.flight-menu.integration.urc-redux` 的
   `MenuGroupVHF.prefab`；上游修 bug 后会自动跟着更新，不要把它内联展开。
 - 改完 prefab 记得 `read_console` 查 error，并确认 `UdonSharpEditorUtility` 没有把引用丢成 null。
