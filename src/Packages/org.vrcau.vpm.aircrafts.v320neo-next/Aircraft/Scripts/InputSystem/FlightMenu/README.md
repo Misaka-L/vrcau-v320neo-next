@@ -30,7 +30,8 @@ Aircraft/Scripts/InputSystem/FlightMenu/
 ```
 <Name>FlightMenu
 ├ MenuController   <系统>FlightMenuController（桥接 AvionicsBus，无外部引用；
-│                  SeatAdjust 例外：seatAdjuster 指向座位自己的 SeatAdjuster）
+│                  SeatAdjust 例外：seatAdjuster 是座位自己的 SeatAdjuster，
+│                  由挂在该座位 station 上的 SeatAdjusterStationBinder 在本机玩家入座时写入）
 ├ MenuGroup        FlightMenuGroup（该系统自己的子菜单；只有单条目系统没有这一层）
 │ └ ...            组内菜单项
 ├ RadioGroup       （仅 VHF）MenuGroupVHF.prefab 的嵌套实例，含 FlightMenuRadioController 与频率输入组
@@ -49,7 +50,7 @@ Aircraft/Scripts/InputSystem/FlightMenu/
 | `ElevatorTrimFlightMenu` | `Entries/Entry`（弹窗 "Trim"） | Desktop、VR Left Hand |
 | `LandingGearFlightMenu` | `Entries/Entry`（按钮 "Landing Gear"） | Desktop |
 |  | `Entries/EntryMenu`（弹窗 "Landing Gear"） | VR Right Hand |
-| `SeatAdjustFlightMenu` | `Entries/Entry`（弹窗 "Seat Adjust"） | Desktop 的 Page 2、VR Left Hand（**每个座位一份实例**，见下） |
+| `SeatAdjustFlightMenu` | `Entries/Entry`（弹窗 "Seat Adjust"） | Desktop 的 Page 2、VR Left Hand（全机一份，入座时绑定座位，见下） |
 | `BrakeFlightMenu` | `Entries/Entry`（按钮 "Park Brake"） | Desktop、VR Left Hand |
 | `AutoStartFlightMenu` | `Entries/Entry`（按钮 "Auto Start"） | Desktop、VR Left Hand |
 | `FlapFlightMenu` | `Entries/Entry`（滑块 "Flaps"） | Desktop、VR Right Hand |
@@ -73,6 +74,11 @@ v320neo-next/SaccEntity/Systems/EnableInVehicle/AvioncsFlightMenu/
 
 机组菜单本体在 `v320neo-next/SaccEntity/Systems/FlightMenuGroup/Pilot/`
 （`Desktop` / `Next Page` / `VR Left Hand` / `VR Right Hand`）。
+
+驾驶座以外还有一套 `CockpitNoPilot/`（`Desktop` / `VR Left Hand` / `VR Right Hand`，
+三组目前都只有一项 `Seat Adjust`，其余条目以后再补），
+供 `SeatCopilot` 与三个 `Obs1Seat` 用各自的 `FlightMenuStationMenuSwitcher` 切过去；
+`SeatPilot` 仍切到 `Pilot/`。菜单系统本体（`EnableInVehicle/FlightMenuSystem`）全机只有一份。
 
 ## 机组菜单如何引用系统菜单
 
@@ -132,14 +138,26 @@ Desktop                        FlightMenuGroup
 
 这样每个机组可以有自己的入口参数，而 Controller 全机仍然只有一份。
 
-## 座位调节（Seat Adjust）：每个座位一份实例
+## 座位调节（Seat Adjust）：共享一份实例，入座时绑定座位
 
 `SeatAdjustFlightMenu` 与其它系统菜单的差别：它的 `MenuController`
 （`SeatAdjusterFlightMenuController`）**不经过 AvionicsBus**，而是持有一个
 `public SeatAdjuster seatAdjuster`，把 4 个 hold 事件转发给这个座位自己的
 `SeatAdjuster`（`Aircraft/Scripts/Systems/Seat/SeatAdjuster.cs`）。
-座位偏移是**每个实例自己的状态**，所以每个座位都要有自己的菜单实例：
-全机共用一份会让所有座位都去动被引用的那一个。
+座位偏移是**每个 SeatAdjuster 自己的状态**，但菜单只需要全机一份：
+`MenuController.seatAdjuster` 由**座位侧**的
+`Aircraft/Scripts/InputSystem/FlightMenuController/Seat/SeatAdjusterStationBinder.cs`
+在本机玩家入座时（`OnStationEntered` + `player.isLocal`）改写成该座位自己的 `SeatAdjuster`。
+
+VRCStation 只把 `OnStationEntered` 发给**同一个 GameObject** 上的 UdonBehaviour，
+所以 binder 挂在 station 根节点（例：`Seats/Cockpit/SeatPilot`），
+不能挂在 SeatAdjuster 子节点或它的父节点上。
+飞机 prefab 里 `MenuController.seatAdjuster` 的静态值保留为 SeatPilot 的 SeatAdjuster，
+作为「还没入座」时的默认值；入座后由 binder 改写。
+
+现状：Cockpit 下的 5 个座位各有一份 `InSeatOnly<座位>/SeatAdjuster` + 一个 `SeatAdjusterStationBinder`
+（`SeatCopilot` → `InSeatOnlyCopilot`，三个 `Obs1Seat` → `InSeatOnlyObs1/2/3`），
+`SeatPilot` 用 `Pilot` 那套机组菜单，其余 4 个用 `CockpitNoPilot` 那套（详见上文）。
 
 给飞机加/改一个座位的座位调节：
 
@@ -149,20 +167,26 @@ Desktop                        FlightMenuGroup
    `adjustStep`（`StepMove*` 的步进距离）按该座位需要设置。
 2. 把该节点放进该座位 `SaccVehicleSeat.EnableInSeat`，保持"本机只有所坐座位的
    SeatAdjuster 是启用的"这一前提。
-3. 在 `EnableInVehicle/AvioncsFlightMenu/` 下复制一份 `SeatAdjust` 实例并改名
-   （如 `SeatAdjustCopilot`），把它的 `MenuController.seatAdjuster` 覆盖指向该座位的
-   `SeatAdjuster`。
-4. 在该座位的机组菜单下加一个 `FlightMenuReferenceItem`，`targetMenuItem` 指向新实例的
+3. 在该座位的 station 根节点上加一个 `SeatAdjusterStationBinder`：`menuController` 指向共享的
+   `SeatAdjust` 实例里的 `MenuController`，`seatAdjuster` 指向步骤 1 的那个节点。
+   （不要再复制 `SeatAdjust` 实例，也不需要按座位做 `MenuController.seatAdjuster` 外层覆盖。）
+4. 在该座位的机组菜单下加一个 `FlightMenuReferenceItem`，`targetMenuItem` 指向共享实例的
    `Entries/Entry`，然后 Scan。（同一条目仍可被多个机组引用。）
 
 补充：
 
 - 座位调节不需要 AvionicsBus、也不读写任何总线数据 id，`SeatAdjuster` 可以直接复制到别的
-  飞机/载具（复制脚本 + 菜单 prefab 即可），每个座位互不影响。
+  飞机/载具（复制脚本 + 菜单 prefab + binder 即可），每个座位互不影响。
 - 座位回到初始位置：给 `SeatAdjuster` 发 `ResetAdjustment`。脚本**不自动归零**
   （原来由 AvionicsBus 的重生事件触发），重生/离座/换座位要不要归零由宿主决定。
 - 菜单项 `eventTarget` 仍只指向自己 prefab 内的 `MenuController`；跨 prefab 的引用只有
-  `seatAdjuster` 这一个。
+  `seatAdjuster` 这一个（现在由 binder 在运行时写入，不再靠 prefab 外层覆盖）。
+- binder 的 `menuController` / `seatAdjuster` 任一未赋值时，只在本地玩家入座时打一条 warning
+  并保留旧绑定，不会把菜单指向空对象；非本地玩家的事件一律忽略。
+- 只有自己带 `SeatAdjuster` 的座位才需要挂 binder。没挂 binder 的座位进入后，
+  `MenuController.seatAdjuster` 仍是上一个入座座位写入的值（若该座位的机组菜单里也有
+  Seat Adjust 条目，会去动那一个座位）；所以要么给它也加 `SeatAdjuster` + binder，
+  要么不要在它的机组菜单里接 Seat Adjust 条目。
 
 ## 修改时的注意事项
 
@@ -178,8 +202,9 @@ Desktop                        FlightMenuGroup
   `VhfFlightMenu.prefab` 里 `RadioGroup/MenuController.transceiver` 是空的，真实值是在飞机 prefab 里
   对 `VHF` 实例做的**外层覆盖**（指向 `SaccEntity/Systems/ATA23-Communication/Radio/VHF/SFEXT_URC_VHF`）。
   重建实例后别忘了恢复这个覆盖。
-  同理 `SeatAdjustFlightMenu.prefab` 里 `MenuController.seatAdjuster` 是空的，真实值是在飞机 prefab 里
-  对该 `SeatAdjust` 实例做的外层覆盖（指向该座位自己的 `SeatAdjuster`）。
+  同理 `SeatAdjustFlightMenu.prefab` 里 `MenuController.seatAdjuster` 是空的；实际目标由挂在该座位
+   station 上的 `SeatAdjusterStationBinder` 在本机玩家入座时写入（飞机 prefab 里的静态值只是
+   入座前的默认值）。
 - `VhfFlightMenu.prefab` 依赖 `org.vrcau.vpm.systems.flight-menu.integration.urc-redux` 的
   `MenuGroupVHF.prefab`；上游修 bug 后会自动跟着更新，不要把它内联展开。
 - 改完 prefab 记得 `read_console` 查 error，并确认 `UdonSharpEditorUtility` 没有把引用丢成 null。
