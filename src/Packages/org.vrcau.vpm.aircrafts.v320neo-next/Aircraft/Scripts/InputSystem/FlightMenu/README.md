@@ -75,6 +75,11 @@ v320neo-next/SaccEntity/Systems/EnableInVehicle/AvioncsFlightMenu/
 机组菜单本体在 `v320neo-next/SaccEntity/Systems/FlightMenuGroup/Pilot/`
 （`Desktop` / `Next Page` / `VR Left Hand` / `VR Right Hand`）。
 
+驾驶座以外还有一套 `CockpitNoPilot/`（`Desktop` / `VR Left Hand` / `VR Right Hand`，
+三组目前都只有一项 `Seat Adjust`，其余条目以后再补），
+供 `SeatCopilot` 与三个 `Obs1Seat` 用各自的 `FlightMenuStationMenuSwitcher` 切过去；
+`SeatPilot` 仍切到 `Pilot/`。菜单系统本体（`EnableInVehicle/FlightMenuSystem`）全机只有一份。
+
 ## 机组菜单如何引用系统菜单
 
 机组菜单节点的**子对象就是菜单内容本身**，运行时用的 `menuItems` 数组由子对象**扫描生成**：
@@ -149,6 +154,10 @@ VRCStation 只把 `OnStationEntered` 发给**同一个 GameObject** 上的 UdonB
 不能挂在 SeatAdjuster 子节点或它的父节点上。
 飞机 prefab 里 `MenuController.seatAdjuster` 的静态值保留为 SeatPilot 的 SeatAdjuster，
 作为「还没入座」时的默认值；入座后由 binder 改写。
+
+现状：Cockpit 下的 5 个座位各有一份 `InSeatOnly<座位>/SeatAdjuster` + 一个 `SeatAdjusterStationBinder`
+（`SeatCopilot` → `InSeatOnlyCopilot`，三个 `Obs1Seat` → `InSeatOnlyObs1/2/3`），
+`SeatPilot` 用 `Pilot` 那套机组菜单，其余 4 个用 `CockpitNoPilot` 那套（详见上文）。
 
 给飞机加/改一个座位的座位调节：
 
