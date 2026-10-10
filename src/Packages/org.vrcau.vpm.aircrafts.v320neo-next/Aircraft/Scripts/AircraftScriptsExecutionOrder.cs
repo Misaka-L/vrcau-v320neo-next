@@ -6,6 +6,9 @@
         // https://github.com/Sacchan-VRC/SaccFlightAndVehicles/blob/8578813e3627b39f2f564684e865be940c6947d3/Scripts/SaccAirVehicle/SaccAirVehicle.cs#L11
         // From 1.8.1
         // ReSharper disable once UnusedMember.Global
+        public const int SimplePilotInputProvider = 2;
+        public const int SimplePilotInputMixer = 3;
+        public const int SimplePilotInputSaccActuator = 4;
         public const int SaccAirVehicle = 5;
         public const int Adr = 6;
         public const int Fac = 7;

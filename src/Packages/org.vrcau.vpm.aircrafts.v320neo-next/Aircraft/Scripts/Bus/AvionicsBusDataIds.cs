@@ -35,6 +35,7 @@ namespace VAU.V320NeoNext.Runtime.Bus
         V32NN_Frequent_ADIRS_ADR_1_VerticalSpeedFeetPerMinute,
         V32NN_Frequent_ADIRS_ADR_1_MachNumber,
         V32NN_Frequent_ADIRS_ADR_1_AoA,
+
         // ATA34. Navigation / ADIRS / IR
         V32NN_Frequent_ADIRS_IR_1_Vertical_G_Load,
 
@@ -48,6 +49,7 @@ namespace VAU.V320NeoNext.Runtime.Bus
         // 襟翼移动期间每帧都会变：只写不 Notify，由 FlapFlightMenuController 轮询后自行算状态文本
         V32NN_Frequent_Flap_SlatAngle,
         V32NN_Frequent_Flap_FlapAngle,
+
         // 配平位置（-1~1）：总线上的这个变量就是配平状态本身。
         // 自动配平控制律、桌面按键与菜单 bridge（ElevatorTrimFlightMenuController）都直接写它，
         // 非 owner 读到的是网络同步下来的值。每帧都可能变化，所以只写不 Notify，消费方轮询；
@@ -128,6 +130,7 @@ namespace VAU.V320NeoNext.Runtime.Bus
 
         // ATA32. Landing Gear
         V32NN_Infrequent_LandingGear_Sync_GearLeverUp,
+
         // ATA32. Landing Gear / Brake
         V32NN_Infrequent_Brake_Sync_ParkBrakeSet,
 
@@ -146,8 +149,10 @@ namespace VAU.V320NeoNext.Runtime.Bus
         // ATA22. Auto Flight / Auto Thrust (FlightMenu)
         // Engage 只是「按了一次 Toggle A/THR」的目标状态：接通状态只在 owner 本地有意义，
         // 因此 **不做网络同步**（无 _Sync_、无 Sync 类），谁按谁本地应用、只有 owner 生效。
+        V32NN_Infrequent_AutoPilot_Engaged,
         V32NN_Infrequent_AutoThrust_EngageRequest,
         V32NN_Infrequent_AutoThrust_Cruise,
+
         // Armed：本机「已预位或已在巡航」状态，bridge 用它算反值
         V32NN_Infrequent_AutoThrust_Armed,
 
@@ -175,10 +180,11 @@ namespace VAU.V320NeoNext.Runtime.Bus
 
     public enum AvionicsBusVector3DataIds
     {
-        V32NN_Frequent_ADR_VelocityNED = 0,
-        V32NN_Infrequent_ND_WindVector = 1,
-        // 座位调节（SeatAdjuster）不走总线：每个座位一份实例、状态在实例内部，
-        // 因此这里没有座位相关的数据 id。
-        Count = 2
+        // ATA22. Auto Flight
+        V32NN_Frequent_AutoPilot_Input,
+
+        V32NN_Infrequent_ND_WindVector,
+
+        Count
     }
 }
