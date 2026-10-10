@@ -3,6 +3,7 @@ using UnityEngine;
 using SaccFlightAndVehicles;
 using System.Reflection;
 using UnityEditor;
+using VAU.V320NeoNext.Runtime.Bus;
 using VAU.V320NeoNext.Runtime.Systems.LegacyInstrument.FCU.Scripts.Autopilot;
 using VAU.V320NeoNext.Runtime.Systems.LegacyFlightDataProvider.LegacyADRIRU;
 using VAU.V320NeoNext.Runtime.Systems.AutoFlight;
@@ -10,7 +11,7 @@ using VAU.V320NeoNext.Runtime.Systems.AutoFlight;
 namespace VAU.V320NeoNext.Runtime.Systems.LegacyInstrument.FCU.Scripts.Autopilot
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
-    public class SFEXT_a320_AutoPilot : UdonSharpBehaviour
+    public class SFEXT_a320_AutoPilot : AbstractAvionicsBusClient
     {
         [Header("--- 系统引用 ---")] public UdonSharpBehaviour SAVControl; // SaccFlight 主控制器
         public FlightDirector flightDirector; // 飞行指引仪
@@ -35,22 +36,14 @@ namespace VAU.V320NeoNext.Runtime.Systems.LegacyInstrument.FCU.Scripts.Autopilot
         public float aoaLimiter = 12f; // 迎角保护阈值 (度)
 
         // 内部状态标志
-        private SaccEntity _entityControl;
-        private Rigidbody _vehicleRigidbody;
-        private Transform _vehicleTransform;
-
         private Vector3 _rotationInputs = Vector3.zero;
         private bool _isAPActive = false;
-        private bool _joystickOverridden = false;
         private bool _isOwner = false;
 
         private void Start()
         {
             if (SAVControl != null)
             {
-                _entityControl = (SaccEntity)SAVControl.GetProgramVariable("EntityControl");
-                _vehicleRigidbody = (Rigidbody)SAVControl.GetProgramVariable("VehicleRigidbody");
-                _vehicleTransform = _entityControl.transform;
                 _isOwner = (bool)SAVControl.GetProgramVariable("IsOwner");
             }
         }
@@ -137,7 +130,7 @@ namespace VAU.V320NeoNext.Runtime.Systems.LegacyInstrument.FCU.Scripts.Autopilot
             _rotationInputs.z = Mathf.Clamp(rollCmd, -1f, 1f);
             _rotationInputs.y = yawCmd;
 
-            SAVControl.SetProgramVariable("JoystickOverride", _rotationInputs);
+            _WriteVector3(AvionicsBusVector3DataIds.V32NN_Frequent_AutoPilot_Input, _rotationInputs);
         }
 
         // 辅助函数：将滚转角收拢至 -180 ~ 180 度
@@ -157,11 +150,9 @@ namespace VAU.V320NeoNext.Runtime.Systems.LegacyInstrument.FCU.Scripts.Autopilot
             _lastPitchError = 0f;
             _lastRollError = 0f;
 
-            if (!_joystickOverridden && SAVControl != null)
+            if (!_ReadBool(AvionicsBusBoolDataIds.V32NN_Infrequent_AutoPilot_Engaged))
             {
-                int currentOverrideCount = (int)SAVControl.GetProgramVariable("JoystickOverridden");
-                SAVControl.SetProgramVariable("JoystickOverridden", currentOverrideCount + 1);
-                _joystickOverridden = true;
+                _WriteAndNotifyBool(AvionicsBusBoolDataIds.V32NN_Infrequent_AutoPilot_Engaged, true);
             }
         }
 
@@ -171,17 +162,11 @@ namespace VAU.V320NeoNext.Runtime.Systems.LegacyInstrument.FCU.Scripts.Autopilot
             if (!_isAPActive) return;
             _isAPActive = false;
 
-            if (_joystickOverridden && SAVControl != null)
+            if (_ReadBool(AvionicsBusBoolDataIds.V32NN_Infrequent_AutoPilot_Engaged))
             {
-                int currentOverrideCount = (int)SAVControl.GetProgramVariable("JoystickOverridden");
-                SAVControl.SetProgramVariable("JoystickOverridden", Mathf.Max(0, currentOverrideCount - 1));
-                _joystickOverridden = false;
+                _WriteAndNotifyBool(AvionicsBusBoolDataIds.V32NN_Infrequent_AutoPilot_Engaged, false);
             }
-
-            if (SAVControl != null)
-            {
-                SAVControl.SetProgramVariable("JoystickOverride", Vector3.zero);
-            }
+            _WriteVector3(AvionicsBusVector3DataIds.V32NN_Frequent_AutoPilot_Input, Vector3.zero);
 
             _rotationInputs = Vector3.zero;
         }

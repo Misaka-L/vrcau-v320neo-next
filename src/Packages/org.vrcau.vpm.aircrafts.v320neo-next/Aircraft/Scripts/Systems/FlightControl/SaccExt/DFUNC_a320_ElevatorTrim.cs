@@ -133,7 +133,7 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.SaccExt
                     Debug.Log("[FBW]Flight Mode");
                 }
 
-                if (SAVControl.JoystickOverridden != 0)
+                if (_ReadBool(AvionicsBusBoolDataIds.V32NN_Infrequent_AutoPilot_Engaged))
                 {
                     Trim = initialTrim;
                 }
