@@ -1,7 +1,6 @@
 ﻿using UdonSharp;
 using UnityEngine;
 using VAU.V320NeoNext.Runtime.InputSystem.SimplePilotInput.Abstract;
-using VAU.V320NeoNext.Runtime.InputSystem.SimplePilotInput.InputProvider.AvionicsBusProvider;
 
 namespace VAU.V320NeoNext.Runtime.InputSystem.SimplePilotInput.InputProvider
 {
@@ -11,16 +10,9 @@ namespace VAU.V320NeoNext.Runtime.InputSystem.SimplePilotInput.InputProvider
     {
         public SimplePilotInputVrProvider vrProvider;
         public SimplePilotInputDesktopProvider desktopProvider;
-        public SimplePilotInputAvionicsBusProvider autoPilotProvider;
 
         private void FixedUpdate()
         {
-            if (autoPilotProvider.overrideOthers)
-            {
-                _SetInputVector(autoPilotProvider.InputVector);
-                return;
-            }
-
             var mixedRaw = vrProvider.InputVector + desktopProvider.InputVector;
 
             _SetInputVector(new Vector3(

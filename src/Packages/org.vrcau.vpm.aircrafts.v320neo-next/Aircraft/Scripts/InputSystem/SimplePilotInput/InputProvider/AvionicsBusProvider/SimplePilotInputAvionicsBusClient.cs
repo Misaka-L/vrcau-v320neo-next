@@ -7,7 +7,7 @@ namespace VAU.V320NeoNext.Runtime.InputSystem.SimplePilotInput.InputProvider.Avi
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public sealed class SimplePilotInputAvionicsBusClient : AbstractAvionicsBusClient
     {
-        private const AvionicsBusVector3DataIds InputId = AvionicsBusVector3DataIds.V32NN_Frequent_AutoPilot_Input;
+        private const AvionicsBusVector3DataIds InputId = AvionicsBusVector3DataIds.V32NN_Frequent_FlightControl_AutoPilotInput;
         private const AvionicsBusBoolDataIds EngagedId = AvionicsBusBoolDataIds.V32NN_Infrequent_AutoPilot_Engaged;
 
         private bool _isInitialized;

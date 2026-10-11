@@ -130,7 +130,7 @@ namespace VAU.V320NeoNext.Runtime.Systems.LegacyInstrument.FCU.Scripts.Autopilot
             _rotationInputs.z = Mathf.Clamp(rollCmd, -1f, 1f);
             _rotationInputs.y = yawCmd;
 
-            _WriteVector3(AvionicsBusVector3DataIds.V32NN_Frequent_AutoPilot_Input, _rotationInputs);
+            _WriteVector3(AvionicsBusVector3DataIds.V32NN_Frequent_FlightControl_AutoPilotInput, _rotationInputs);
         }
 
         // 辅助函数：将滚转角收拢至 -180 ~ 180 度
@@ -166,7 +166,7 @@ namespace VAU.V320NeoNext.Runtime.Systems.LegacyInstrument.FCU.Scripts.Autopilot
             {
                 _WriteAndNotifyBool(AvionicsBusBoolDataIds.V32NN_Infrequent_AutoPilot_Engaged, false);
             }
-            _WriteVector3(AvionicsBusVector3DataIds.V32NN_Frequent_AutoPilot_Input, Vector3.zero);
+            _WriteVector3(AvionicsBusVector3DataIds.V32NN_Frequent_FlightControl_AutoPilotInput, Vector3.zero);
 
             _rotationInputs = Vector3.zero;
         }
