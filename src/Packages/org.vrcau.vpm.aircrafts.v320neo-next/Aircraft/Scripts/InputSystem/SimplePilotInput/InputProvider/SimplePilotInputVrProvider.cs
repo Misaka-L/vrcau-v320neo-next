@@ -31,6 +31,7 @@ namespace VAU.V320NeoNext.Runtime.InputSystem.SimplePilotInput.InputProvider
 
         private bool _isTriggerPressedLastFrame;
         private Quaternion _initialControllerRotation;
+        private Quaternion _lastThisRotation;
 
         private VRCPlayerApi _localPlayer;
         private bool _localPlayerInVr;
@@ -63,12 +64,19 @@ namespace VAU.V320NeoNext.Runtime.InputSystem.SimplePilotInput.InputProvider
             var activatedTrackingDataType = useRightJoystick
                 ? VRCPlayerApi.TrackingDataType.RightHand
                 : VRCPlayerApi.TrackingDataType.LeftHand;
+            var thisRotation = transform.rotation;
 
             var isTriggerPressed = Input.GetAxisRaw(activatedTriggerAxisName) > triggerThreshold;
             var controllerRotation = _localPlayer.GetTrackingData(activatedTrackingDataType).rotation;
 
             if (isTriggerPressed)
             {
+                //difference in vehicle's rotation since last frame
+                var diffToLastThieRotation = thisRotation * Quaternion.Inverse(_lastThisRotation);
+                _lastThisRotation = thisRotation;
+                //zero point rotates with the vehicle so it appears still to the pilot
+                _initialControllerRotation = diffToLastThieRotation * _initialControllerRotation;
+
                 if (!_isTriggerPressedLastFrame)
                 {
                     _initialControllerRotation = controllerRotation;
@@ -79,7 +87,10 @@ namespace VAU.V320NeoNext.Runtime.InputSystem.SimplePilotInput.InputProvider
                     return Vector3.zero;
                 }
 
-                var diffToInitialRotation = controllerRotation * Quaternion.Inverse(_initialControllerRotation);
+                // var diffToInitialRotation = controllerRotation * Quaternion.Inverse(_initialControllerRotation);
+                var diffToInitialRotation =
+                    Quaternion.Inverse(thisRotation) * controllerRotation *
+                    Quaternion.Inverse(_initialControllerRotation) * thisRotation;
 
                 //create normalized vectors facing towards the 'forward' and 'up' directions of the joystick
                 var yawInput = diffToInitialRotation * Vector3.forward;
@@ -92,7 +103,7 @@ namespace VAU.V320NeoNext.Runtime.InputSystem.SimplePilotInput.InputProvider
                     maxJoystickAngle.x,
                     -((Mathf.Acos(Mathf.Clamp(yawInput.x, -1, 1)) - 1.5707963268f) * Mathf.Rad2Deg) /
                     maxJoystickAngle.y,
-                    (Mathf.Acos(Mathf.Clamp(joystickInput.x, -1, 1)) - 1.5707963268f) * Mathf.Rad2Deg /
+                    -((Mathf.Acos(Mathf.Clamp(joystickInput.x, -1, 1)) - 1.5707963268f) * Mathf.Rad2Deg) /
                     maxJoystickAngle.z
                 );
             }
