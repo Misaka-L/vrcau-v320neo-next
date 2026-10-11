@@ -180,8 +180,10 @@ namespace VAU.V320NeoNext.Runtime.Bus
 
     public enum AvionicsBusVector3DataIds
     {
-        // ATA22. Auto Flight
-        V32NN_Frequent_AutoPilot_Input,
+        // ATA27. Flight Control
+        V32NN_Frequent_FlightControl_LocalPilotInput,
+        V32NN_Frequent_FlightControl_AutoPilotInput,
+        V32NN_Frequent_FlightControl_FinalPilotInputToSacc,
 
         V32NN_Infrequent_ND_WindVector,
 

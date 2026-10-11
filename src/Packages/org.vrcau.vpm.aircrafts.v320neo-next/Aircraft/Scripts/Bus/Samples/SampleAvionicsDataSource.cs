@@ -58,7 +58,7 @@ namespace VAU.V320NeoNext.Runtime.Bus.Samples
             _WriteFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADIRS_ADR_1_AltitudeFeet, 0f);
             _WriteFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADIRS_ADR_1_IndicatedAirspeed, 0f);
             _WriteFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADIRS_ADR_1_VerticalSpeedFeetPerMinute, 0f);
-            _WriteVector3(AvionicsBusVector3DataIds.V32NN_Frequent_AutoPilot_Input, Vector3.zero);
+            _WriteVector3(AvionicsBusVector3DataIds.V32NN_Frequent_FlightControl_AutoPilotInput, Vector3.zero);
             _WriteBool(AvionicsBusBoolDataIds.V32NN_Infrequent_EFIS_Left_Sync_LandingSystemOn, false);
 
             _frequentTimer = frequentInterval + 1f; // 让下一次 Update 立刻重新发布
@@ -103,7 +103,7 @@ namespace VAU.V320NeoNext.Runtime.Bus.Samples
             _WriteAndNotifyFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADIRS_ADR_1_IndicatedAirspeed, airspeed);
             _WriteAndNotifyFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADIRS_ADR_1_VerticalSpeedFeetPerMinute, verticalSpeed);
             _WriteAndNotifyInt(AvionicsBusIntDataIds.V32NN_Frequent_ADR_HeadingDegrees, (int)_heading);
-            _WriteAndNotifyVector3(AvionicsBusVector3DataIds.V32NN_Frequent_AutoPilot_Input, new Vector3(airspeed * 0.514444f, verticalSpeed * 0.00508f, 0f));
+            _WriteAndNotifyVector3(AvionicsBusVector3DataIds.V32NN_Frequent_FlightControl_AutoPilotInput, new Vector3(airspeed * 0.514444f, verticalSpeed * 0.00508f, 0f));
             _WriteAndNotifyBool(AvionicsBusBoolDataIds.V32NN_Infrequent_EFIS_Left_Sync_LandingSystemOn, _isDataValid);
 
             if (logWrites) Debug.Log("[Bus Sample] DataSource wrote altitude = " + altitude);

@@ -4,7 +4,7 @@ using UnityEngine;
 namespace VAU.V320NeoNext.Runtime.InputSystem.SimplePilotInput.Abstract
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
-    [DefaultExecutionOrder(AircraftScriptsExecutionOrder.SimplePilotInputSaccActuator)]
+    [DefaultExecutionOrder(AircraftScriptsExecutionOrder.SaccJoystickOverridenActuator)]
     public abstract class SimplePilotInputActuator : UdonSharpBehaviour
     {
         public SimplePilotInputProvider inputProvider;
