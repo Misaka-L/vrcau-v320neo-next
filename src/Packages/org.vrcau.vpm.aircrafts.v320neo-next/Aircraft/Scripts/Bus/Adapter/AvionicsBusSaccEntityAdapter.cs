@@ -20,6 +20,20 @@ namespace VAU.V320NeoNext.Runtime.Bus.Adapter
         [PublicAPI]
         public void SFEXT_L_OwnershipTransfer() => UpdateOwnershipStatus();
 
+        [PublicAPI]
+        public void SFEXT_G_PilotEnter()
+        {
+            _WriteAndNotifyBool(AvionicsBusBoolDataIds.Sim_Infrequent_HasPilot, true);
+            UpdateOwnershipStatus();
+        }
+
+        [PublicAPI]
+        public void SFEXT_G_PilotExit()
+        {
+            _WriteAndNotifyBool(AvionicsBusBoolDataIds.Sim_Infrequent_HasPilot, false);
+            UpdateOwnershipStatus();
+        }
+
         private void UpdateOwnershipStatus()
         {
             _WriteAndNotifyBool(AvionicsBusBoolDataIds.Sim_Infrequent_HaveAircraftOwnership, EntityControl.IsOwner);
