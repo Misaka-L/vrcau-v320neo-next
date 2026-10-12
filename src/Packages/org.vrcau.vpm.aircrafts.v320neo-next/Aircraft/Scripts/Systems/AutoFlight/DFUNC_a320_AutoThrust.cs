@@ -106,7 +106,7 @@ namespace VAU.V320NeoNext.Runtime.Systems.AutoFlight
 
         #endregion
 
-        protected override void _OnAvionicsBusRespawnByLocalPlayer()
+        protected override void _OnAvionicsBusRespawn_RunInOwner()
         {
             SetSpeed = 194;
         }

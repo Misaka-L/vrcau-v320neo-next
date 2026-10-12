@@ -58,7 +58,7 @@ namespace VAU.V320NeoNext.Runtime.Bus.Samples
             if (logChanges) Debug.Log("[Bus Sample] PollingInstrument started, IAS = " + _indicatedAirspeed);
         }
 
-        protected override void _OnAvionicsBusRespawnByLocalPlayer()
+        protected override void _OnAvionicsBusRespawn_RunInOwner()
         {
             _pollTimer = 0f;
             _lastLoggedAirspeed = 0f;
