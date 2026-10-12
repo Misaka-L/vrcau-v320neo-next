@@ -62,7 +62,7 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.SaccExt
             ResetStatus();
         }
 
-        protected override void _OnAvionicsBusRespawnByLocalPlayer() => ResetStatus();
+        protected override void _OnAvionicsBusRespawn_RunInOwner() => ResetStatus();
 
         public void _HasPilotChanged()
         {

@@ -53,7 +53,7 @@ namespace VAU.V320NeoNext.Runtime.Systems.IndicatingRecording.EfisControl
             ResetStatusToDefault();
         }
 
-        protected override void _OnAvionicsBusRespawnByLocalPlayer()
+        protected override void _OnAvionicsBusRespawn_RunInOwner()
         {
             ResetStatusToDefault();
         }

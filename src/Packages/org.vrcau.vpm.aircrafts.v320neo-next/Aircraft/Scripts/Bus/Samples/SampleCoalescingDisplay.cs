@@ -53,7 +53,7 @@ namespace VAU.V320NeoNext.Runtime.Bus.Samples
             _headingDegrees = _ReadInt(AvionicsBusIntDataIds.V32NN_Frequent_ADR_HeadingDegrees);
         }
 
-        protected override void _OnAvionicsBusRespawnByLocalPlayer()
+        protected override void _OnAvionicsBusRespawn_RunInOwner()
         {
             _notifyCount = 0;
             _refreshCount = 0;

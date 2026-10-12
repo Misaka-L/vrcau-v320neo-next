@@ -45,11 +45,11 @@ namespace VAU.V320NeoNext.Runtime.Bus.Adapter
         {
             if (Networking.IsOwner(EntityControl.gameObject))
             {
-                _avionicsBus._AvionicsBusRespawnByLocalPlayer();
+                _avionicsBus._AvionicsBusRespawn_RunInOwner();
             }
             else
             {
-                _avionicsBus._AvionicsBusRespawnByRemotePlayer();
+                _avionicsBus._AvionicsBusRespawn_RunInRemote();
             }
         }
     }

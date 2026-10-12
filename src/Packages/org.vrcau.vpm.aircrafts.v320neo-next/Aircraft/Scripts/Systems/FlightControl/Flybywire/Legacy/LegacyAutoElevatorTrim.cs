@@ -65,7 +65,7 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.Flybywire.Legacy
             targetAoa = 0;
         }
 
-        protected override void _OnAvionicsBusRespawnByLocalPlayer() => ResetStatus();
+        protected override void _OnAvionicsBusRespawn_RunInOwner() => ResetStatus();
 
         protected override void _OnAvionicsBusPostStart()
         {

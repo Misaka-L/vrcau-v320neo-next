@@ -65,7 +65,7 @@ namespace VAU.V320NeoNext.Runtime.Systems.LandingGear.SaccExt
             }
         }
 
-        protected override void _OnAvionicsBusRespawnByLocalPlayer()
+        protected override void _OnAvionicsBusRespawn_RunInOwner()
         {
             _WriteFloat(BrakePedalInputId, 0);
             _WriteFloat(AutoBrakeInputId, 0);

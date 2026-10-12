@@ -102,23 +102,23 @@ namespace VAU.V320NeoNext.Runtime.Bus
         /// <summary>
         /// 由本地玩家触发的飞机重生：通知所有 client 执行各自的 Response 逻辑。
         /// </summary>
-        public void _AvionicsBusRespawnByLocalPlayer()
+        public void _AvionicsBusRespawn_RunInOwner()
         {
             for (int i = 0; i < _clients.Length; i++)
             {
                 if (_clients[i] == null) continue;
 
-                _clients[i]._AvionicsBusRespawnByLocalPlayer();
+                _clients[i]._AvionicsBusRespawn_RunInOwner();
             }
         }
 
-        public void _AvionicsBusRespawnByRemotePlayer()
+        public void _AvionicsBusRespawn_RunInRemote()
         {
             for (int i = 0; i < _clients.Length; i++)
             {
                 if (_clients[i] == null) continue;
 
-                _clients[i]._AvionicsBusRespawnByRemotePlayer();
+                _clients[i]._AvionicsBusRespawn_RunInRemote();
             }
         }
 
