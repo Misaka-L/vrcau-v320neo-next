@@ -1,334 +1,112 @@
-using System;
 using JetBrains.Annotations;
 using SaccFlightAndVehicles;
 using UdonSharp;
 using UnityEngine;
 using VAU.V320NeoNext.Runtime.Bus;
-using VAU.V320NeoNext.Runtime.Systems.LegacyFlightDataProvider;
 
 //note:this code is original from https://github.com/esnya/EsnyaSFAddons
 //to satisfy vau320's demand, add autotrim
 //to optimize change vellift in SAV to trim
 //2024-09-29 尝试一个新东西，先把这个脚本作用在JoystickOverridde上，（FBW？）
+//2026-10-12 自动配平逻辑移动到 LegacyAutoElevatorTrim
 namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.SaccExt
 {
-    /// <summary>
-    /// 俯仰配平系统，直接读写航电总线。配平位置与 Auto Trim 都没有第二份状态：
-    /// <list type="bullet">
-    /// <item><description><see cref="Trim"/> 就是总线上的
-    /// <c>V32NN_Frequent_ElevatorTrim_Sync_TrimPosition</c>：本系统的控制律与桌面按键写它，
-    /// 菜单 bridge 的手动配平也直接写同一个变量，非 owner 读到的是网络同步下来的值；</description></item>
-    /// <item><description><see cref="AutoTrimActive"/> 就是总线上的
-    /// <c>V32NN_Infrequent_ElevatorTrim_Sync_AutoTrimActive</c>。</description></item>
-    /// </list>
-    /// 网络镜像由 <see cref="ElevatorTrimAvionicsBusContinuousSync"/>（配平位置，Continuous）与
-    /// <see cref="ElevatorTrimAvionicsBusSync"/>（Auto Trim 状态，Manual）负责，本系统自己不做网络同步。
-    /// </summary>
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
+    [DefaultExecutionOrder(AircraftScriptsExecutionOrder.SaccJoystickOverridenActuator)]
     public class DFUNC_a320_ElevatorTrim : AbstractAvionicsBusClient
     {
-        public YFI_FlightDataInterface BasicFlightData;
-        public RadioAltimeter.RadioAltimeter radioAltimeter;
+        public SaccAirVehicle SAVControl;
+        public string animatorParameterName = "elevtrim";
 
-        [Header("配平输入")]
-        //[Tooltip("最大配平强度，作用于velLift变量，对于320而言就是10 （-10-10，-10时机头会稍微往下掉）")]
-        //[Range(0, 50)] public float trimStrength = 10;
-        //[Tooltip("配平强度偏置，最终的VelLift =trimStrength *x +  trimBias")]
-        //[Range(0, 50)] public float trimBias = 8;
-        private float prevTrim;
+        private Rigidbody _vehicleRigidbody;
+        private Transform _pitchForcePosition;
+        private Animator _vehicleAnimator;
 
-        // 配平的手动输入由 ElevatorTrimFlightMenuController 解读成配平位置后**直接写总线状态**
-        // （V32NN_Frequent_ElevatorTrim_Sync_TrimPosition），本系统不需要再消费什么目标值。
+        private float _rotMultiMaxSpeed;
 
         public float initialTrim = 0.3f;
+        private float _prevTrim;
 
-        /// <summary>
-        /// 当前配平位置（-1~1）。总线上的变量就是唯一状态：owner 写的值直接进总线，
-        /// 非 owner 由 <see cref="ElevatorTrimAvionicsBusContinuousSync"/> 收到网络值后写回总线，这里只读。
-        /// </summary>
-        public float Trim
+        private float Trim
         {
             get => _ReadFloat(TrimPositionId);
             set => _WriteFloat(TrimPositionId, value);
         }
 
-        public float critiaclAOA = 20f; //临界攻角，sav.pitchaoa低于该数值时，触发afloorProtect;
-
-        [Header("controller")] public float targetLoadFactor = 1;
-        public float targetAoa = 0;
-
-        public float TrimError = 0;
-        private float TrimErrorLastFrame = 0;
-        public float TrimErrorIntergrate = 0;
-        public float TrimErrorDerivative = 0;
-
-        [Header("Controllor value for curise")]
-        public float kp1 = 0.04f; //载荷系数控制率 0.6 0.015 俯仰角控制率 0.02 0.001
-
-        public float ki1 = 0.0015f;
-        public float kd1 = 0.0001f;
-
-        [Header("Controllor value for low speed (below 220kts)")]
-        //低空小表速，使用另一套更稳定的参数
-        public float kp2 = 0.25f;
-
-        public float ki2 = 0.4f;
-        public float kd2 = 0.0003f;
-
-        [Header("animation")] public string animatorParameterName = "elevtrim";
-
-        [Tooltip("0-直接法则 1-飞行模式 2-地面模式 3-拉平模式")]
-        public int trimMode = 1; //0-直接法则 1-飞行模式 2-地面模式 3-拉平模式
-
-        /// <summary>
-        /// Auto Trim 是否激活。总线上的变量就是唯一状态，网络同步由
-        /// <see cref="ElevatorTrimAvionicsBusSync"/> 负责。
-        /// 当侧杆(SFEXT_O_JoystickGrabbed/SFEXT_O_JoystickDropped)以及AP(JoystickOverride)无输入时，配平才激活。
-        /// </summary>
-        public bool AutoTrimActive
-        {
-            get => _ReadBool(AutoTrimActiveId);
-            set => _WriteAndNotifyBool(AutoTrimActiveId, value);
-        }
-
-        public bool TrimActiveLastFrame = false;
-        public bool afloorProtect = false;
-        public bool lowSpeedMode = false;
-
-        public Vector3 FBWRotationInputs;
-
-        private void ResetStatus()
-        {
-            trimMode = 0;
-            Trim = initialTrim; // 总线即状态，写进去就是当前配平位置
-            prevTrim = initialTrim;
-            if (vehicleAnimator) vehicleAnimator.SetFloat(animatorParameterName, .5f);
-            //SAVControl.SetProgramVariable("VelLiftStart", trimStrength* trim + trimBias);
-            vehicleRigidbody = SAVControl.VehicleRigidbody;
-            pitchForcePosition = SAVControl.PitchMoment;
-            TrimError = 0;
-            TrimErrorIntergrate = 0;
-            TrimErrorDerivative = 0;
-            TrimErrorLastFrame = 0;
-            targetAoa = 0;
-            DoTrimAnimatorAndUiUpdate();
-        }
-
-        private void PilotUpdate()
-        {
-            //计算配平值
-            float DeltaTime = Time.deltaTime;
-
-            var pitchInputs = SAVControl.RotationInputs.x;
-
-            //飞行模式
-            if (AutoTrimActive &&
-                !SAVControl.Taxiing &&
-                radioAltimeter.radioAltitude >= 50)
-            {
-                if (trimMode != 1)
-                {
-                    trimMode = 1;
-                    TrimError = TrimErrorIntergrate = TrimErrorDerivative = 0f;
-                    Debug.Log("[FBW]Flight Mode");
-                }
-
-                if (_ReadBool(AvionicsBusBoolDataIds.V32NN_Infrequent_AutoPilot_Engaged))
-                {
-                    Trim = initialTrim;
-                }
-                else
-                {
-                    if (SAVControl.AngleOfAttackPitch < critiaclAOA)
-                    {
-                        afloorProtect = false;
-                        targetLoadFactor = StickInputtoLoadFactor(pitchInputs, DeltaTime);
-                        TrimError = (targetLoadFactor - BasicFlightData.verticalG);
-                        TrimErrorIntergrate = Mathf.Clamp(TrimError * DeltaTime + TrimErrorIntergrate, -1, 1); //处理积分饱和
-                        TrimErrorDerivative = (TrimError - TrimErrorLastFrame) / DeltaTime;
-                    }
-                    else
-                    {
-                        afloorProtect = true;
-                        targetAoa = StickInputtoAoa(pitchInputs, DeltaTime);
-                        TrimError = targetAoa - BasicFlightData.AOAPitch; //todo:afloor控制律
-                        TrimErrorIntergrate = 0;
-                        TrimErrorDerivative = 0;
-                    }
-
-                    var kp = kp1;
-                    var ki = ki1;
-                    var kd = kd1;
-
-                    lowSpeedMode = SAVControl.AirSpeed < 110f;
-                    if (lowSpeedMode)
-                    {
-                        kp = kp2;
-                        ki = ki2;
-                        kd = kd2;
-                    }
-
-                    //trim = Mathf.MoveTowards(trim, Mathf.Clamp(kp * TrimError + ki * TrimErrorIntergrate, -1, 1), 0.1f);
-                    Trim = Mathf.Clamp(kp * TrimError + ki * TrimErrorIntergrate + kd * TrimErrorDerivative, -1, 1);
-                    TrimErrorLastFrame = TrimError;
-                }
-            }
-
-            //地面模式
-            else if (AutoTrimActive && SAVControl.Taxiing)
-            {
-                if (trimMode != 2)
-                {
-                    trimMode = 2;
-                    TrimError = TrimErrorIntergrate = TrimErrorDerivative = 0f;
-                    Debug.Log("[FBW]Ground Mode");
-                }
-
-                Trim = initialTrim;
-                targetLoadFactor = StickInputtoLoadFactor(pitchInputs, DeltaTime);
-            }
-
-            //拉平模式
-            else if (AutoTrimActive &&
-                     radioAltimeter.radioAltitude < 50 &&
-                     !SAVControl.Taxiing &&
-                     BasicFlightData.verticalSpeed < -0.6 &&
-                     SAVControl.JoystickOverridden == 0)
-            {
-                var targetTrim = initialTrim;
-                if (trimMode != 3)
-                {
-                    trimMode = 3;
-                    Debug.Log("[FBW]Touchdown Mode");
-                    targetTrim = Trim - 0.05f;
-                }
-
-                //俯仰角控制率
-                /*
-                targetPitch = -2f;
-                TrimError = (targetPitch - BasicFlightData.pitch);
-                TrimErrorIntergrate += TrimError;
-                TrimErrorDerivative = (TrimError - TrimErrorLastFrame) / DeltaTime;
-                trim = Mathf.Clamp(kp * TrimError + ki * TrimErrorIntergrate + kd * TrimErrorDerivative, -1, 1);
-                */
-                TrimError = TrimErrorIntergrate = TrimErrorDerivative = 0f;
-                Trim = Mathf.MoveTowards(Trim, targetTrim, DeltaTime * 0.025f);
-            }
-        }
-
-        private float StickInputtoLoadFactor(float pitchInputs, float deltaTime)
-        {
-            var maxLoad = 2f;
-            var minLoad = 0f;
-
-            var maxLoadRate = 1f * deltaTime; //每秒最大变化1g
-            //SAV脚本中已经做了输入的平方化，所以这里直接线性转换为载荷目标
-            if (pitchInputs > 0.01)
-            {
-                //推杆 
-                targetLoadFactor = Mathf.MoveTowards(targetLoadFactor,
-                    (minLoad - 1f) * Mathf.Pow(pitchInputs, 2) + 1,
-                    maxLoadRate);
-            }
-            else if ((pitchInputs < -0.01))
-            {
-                //拉杆 
-                targetLoadFactor = Mathf.MoveTowards(targetLoadFactor,
-                    (maxLoad - 1f) * Mathf.Pow(pitchInputs, 2) + 1,
-                    maxLoadRate);
-            }
-            else
-            {
-                targetLoadFactor = Mathf.MoveTowards(targetLoadFactor, 1, maxLoadRate);
-            }
-
-            if (trimMode != 1)
-                //飞行模式以外给一个比较小的载荷目标约束，避免离地时模式切换导致配平位置突变
-                return Mathf.Clamp(targetLoadFactor, 1f - 0.5f, 1f + 0.5f);
-            else
-                return targetLoadFactor;
-        }
-
-        private float StickInputtoAoa(float pitchInputs, float deltaTime)
-        {
-            var maxLoadRate = 10f * deltaTime; //每秒最大变化1单位
-            //SAV脚本中已经做了输入的平方化，所以这里直接线性转换为载荷目标
-            if (pitchInputs > 0.01)
-            {
-                //推杆 
-                targetAoa = Mathf.MoveTowards(targetAoa,
-                    -(critiaclAOA) * Mathf.Pow(pitchInputs, 2),
-                    maxLoadRate);
-            }
-            else if ((pitchInputs < -0.01))
-            {
-                //拉杆
-                targetAoa = Mathf.MoveTowards(targetAoa,
-                    (critiaclAOA) * Mathf.Pow(pitchInputs, 2),
-                    maxLoadRate);
-            }
-            else
-            {
-                targetAoa = Mathf.MoveTowards(targetAoa, 1, maxLoadRate);
-            }
-
-            //if (trimMode != 1) return Mathf.Clamp(targetAoa, -3, 3);
-            //else
-            return targetAoa;
-        }
-
-        private void LocalUpdate()
-        {
-            var trimChanged = !Mathf.Approximately(Trim, prevTrim);
-            prevTrim = Trim;
-            if (trimChanged)
-            {
-                DoTrimAnimatorAndUiUpdate();
-            }
-        }
-
-        private void DoTrimAnimatorAndUiUpdate()
-        {
-            SetDirty();
-            if (vehicleAnimator) vehicleAnimator.SetFloat(animatorParameterName, Remap01(Trim, -1, 1));
-            //SAVControl.SetProgramVariable("VelLiftStart", trim * trimStrength + trimBias);
-
-            trimDisplayString = $"{(Trim > 0 ? "UP" : "DOWN")} {Mathf.Abs(Trim):f2}";
-        }
-
-        #region AvionicsBus
-
         private const AvionicsBusFloatDataIds TrimPositionId =
             AvionicsBusFloatDataIds.V32NN_Frequent_ElevatorTrim_Sync_TrimPosition;
 
-        /// <summary>Auto Trim 状态本身（总线即状态，读写同一个 id）。</summary>
-        private const AvionicsBusBoolDataIds AutoTrimActiveId =
-            AvionicsBusBoolDataIds.V32NN_Infrequent_ElevatorTrim_Sync_AutoTrimActive;
+        #region Lifetime (Start, Respawn)
+
+        public void SFEXT_L_EntityStart()
+        {
+            _rotMultiMaxSpeed = SAVControl.RotMultiMaxSpeed;
+            _vehicleAnimator = SAVControl.VehicleAnimator;
+            _vehicleRigidbody = SAVControl.VehicleRigidbody;
+            _pitchForcePosition = SAVControl.PitchMoment;
+        }
+        
+        private void Start()
+        {
+            _rotMultiMaxSpeed = SAVControl.RotMultiMaxSpeed;
+            _vehicleAnimator = SAVControl.VehicleAnimator;
+            _vehicleRigidbody = SAVControl.VehicleRigidbody;
+            _pitchForcePosition = SAVControl.PitchMoment;
+        }
 
         protected override void _OnAvionicsBusStart()
         {
-            // 总线是唯一状态，开局先放上系统初始配平：非 owner 在收到第一个网络包之前不会是 0。
-            // Auto Trim 的初值由 ElevatorTrimAvionicsBusSync 启动时放进总线，这里不重复写。
             _WriteFloat(TrimPositionId, initialTrim);
+            _SubscribeBool(AvionicsBusBoolDataIds.Sim_Infrequent_HasPilot, nameof(_HasPilotChanged));
+
+            ResetStatus();
+        }
+
+        protected override void _OnAvionicsBusRespawnByLocalPlayer() => ResetStatus();
+
+        public void _HasPilotChanged()
+        {
+            if (_ReadBool(AvionicsBusBoolDataIds.Sim_Infrequent_HasPilot))
+                gameObject.SetActive(true);
         }
 
         #endregion
 
+        private void ResetStatus()
+        {
+            Trim = initialTrim;
+            _prevTrim = initialTrim;
+
+            if (_vehicleAnimator) _vehicleAnimator.SetFloat(animatorParameterName, .5f);
+
+            DoTrimAnimatorAndUiUpdate();
+        }
+
+        private void DoTrimAnimatorAndUiUpdate()
+        {
+            if (_vehicleAnimator) _vehicleAnimator.SetFloat(animatorParameterName, Remap01(Trim, -1, 1));
+        }
+
         private void FixedUpdate()
         {
-            isDirty = false;
-            if (isPilot) PilotUpdate();
-            LocalUpdate();
-            if (!hasPilot && !isDirty) gameObject.SetActive(false);
+            var hasPilot = _ReadBool(AvionicsBusBoolDataIds.Sim_Infrequent_HasPilot);
+            var isPilot = _ReadBool(AvionicsBusBoolDataIds.Sim_Infrequent_IsPilot);
 
-            if (!isOwner) return;
+            var trimChanged = !Mathf.Approximately(Trim, _prevTrim);
+            _prevTrim = Trim;
 
-            var rotlift = Mathf.Clamp(SAVControl.AirSpeed / rotMultiMaxSpeed, -1, 1);
-            //var DeltaTime = Time.fixedDeltaTime;
-            var trimForce = (Trim * SAVControl.PitchStrength) * rotlift * SAVControl.Atmosphere * 
+            if (trimChanged) DoTrimAnimatorAndUiUpdate();
+            if (!hasPilot && !trimChanged)
+                gameObject.SetActive(false);
+
+            if (!isPilot) return;
+
+            var rotLift = Mathf.Clamp(SAVControl.AirSpeed / _rotMultiMaxSpeed, -1, 1);
+
+            var trimForce = (Trim * SAVControl.PitchStrength) * rotLift * SAVControl.Atmosphere *
                             -SAVControl.VehicleTransform.up;
-            trimForce *= vehicleRigidbody.mass;
-            vehicleRigidbody.AddForceAtPosition(trimForce, pitchForcePosition.position, ForceMode.Force);
+            trimForce *= _vehicleRigidbody.mass;
+            _vehicleRigidbody.AddForceAtPosition(trimForce, _pitchForcePosition.position, ForceMode.Force);
 
             //尝试了不同的作用力方式
             //1.改VelLiftStart
@@ -349,116 +127,35 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.SaccExt
             //SAVControl.SetProgramVariable("JoystickOverride", FBWRotationInputs);
         }
 
-        public void _TrimUp()
-        {
-            Trim += desktopStep;
-        }
-
-        public void _TrimDown()
-        {
-            Trim -= desktopStep;
-        }
-
-        public void _ToggleAutoTrim()
-        {
-            // 总线即状态：直接改总线上的变量（带 Notify，ElevatorTrimAvionicsBusSync 负责同步出去）
-            AutoTrimActive = !AutoTrimActive;
-
-            Debug.Log(AutoTrimActive ? "[FBW]AUTO TRIM" : "[FBW]MAN TRIM");
-
-            TrimError = 0;
-            TrimErrorIntergrate = 0;
-        }
-
         private float Remap01(float value, float oldMin, float oldMax)
         {
             return (value - oldMin) / (oldMax - oldMin);
         }
 
-        #region DFUNC
+        #region User Input
 
         public KeyCode desktopUp = KeyCode.PageUp, desktopDown = KeyCode.PageDown;
 
         public float desktopStep = 0.02f;
 
-        public KeyCode desktopEnableAuto = KeyCode.F7;
-
-        public SaccEntity entityControl;
-        public SaccAirVehicle SAVControl;
-        private Transform controlsRoot;
-        private Rigidbody vehicleRigidbody;
-        private Transform pitchForcePosition;
-        private Animator vehicleAnimator;
-        private bool hasPilot, isPilot, isOwner, isDirty;
-        private float rotMultiMaxSpeed;
-
-        // User for flight menu update
-        public string trimDisplayString;
-
-        public void SFEXT_L_EntityStart()
+        [PublicAPI]
+        public void _TrimUp()
         {
-            controlsRoot = SAVControl.ControlsRoot;
-            rotMultiMaxSpeed = SAVControl.RotMultiMaxSpeed;
-            if (!controlsRoot) controlsRoot = entityControl.transform;
-            vehicleAnimator = SAVControl.VehicleAnimator;
-            ResetStatus();
+            Trim += desktopStep;
         }
 
-        public void SFEXT_O_PilotEnter()
+        [PublicAPI]
+        public void _TrimDown()
         {
-            isPilot = true;
-            isOwner = true;
-        }
-
-        public void SFEXT_O_PilotExit()
-        {
-            isPilot = false;
-        }
-
-        public void SFEXT_O_TakeOwnership()
-        {
-            isOwner = true;
-        }
-
-        public void SFEXT_O_LoseOwnership()
-        {
-            isOwner = false;
-        }
-
-        public void SFEXT_G_PilotEnter()
-        {
-            hasPilot = true;
-            gameObject.SetActive(true);
-        }
-
-        public void SFEXT_G_PilotExit()
-        {
-            hasPilot = false;
-        }
-
-        public void SFEXT_G_Explode()
-        {
-            ResetStatus();
-        }
-
-        public void SFEXT_G_RespawnButton()
-        {
-            ResetStatus();
+            Trim -= desktopStep;
         }
 
         public override void PostLateUpdate()
         {
-            if (!isPilot) return;
+            if (!_ReadBool(AvionicsBusBoolDataIds.Sim_Infrequent_IsPilot)) return;
 
             if (Input.GetKey(desktopUp)) _TrimUp();
             if (Input.GetKey(desktopDown)) _TrimDown();
-
-            if (Input.GetKeyDown(desktopEnableAuto)) _ToggleAutoTrim();
-        }
-
-        private void SetDirty()
-        {
-            isDirty = true;
         }
 
         #endregion

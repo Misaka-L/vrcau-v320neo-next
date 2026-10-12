@@ -116,6 +116,7 @@ namespace VAU.V320NeoNext.Runtime.Bus
     public enum AvionicsBusBoolDataIds
     {
         Sim_Infrequent_HaveAircraftOwnership,
+        Sim_Infrequent_HasPilot,
         Sim_Infrequent_IsPilot,
         Sim_Frequent_Grounded,
 
