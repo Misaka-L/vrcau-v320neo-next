@@ -38,6 +38,9 @@ namespace VAU.V320NeoNext.Runtime.Bus
 
         // ATA34. Navigation / ADIRS / IR
         V32NN_Frequent_ADIRS_IR_1_Vertical_G_Load,
+        V32NN_Frequent_ADIRS_IR_1_Pitch,
+        V32NN_Frequent_ADIRS_IR_1_PitchRateInDegPerSecond,
+        V32NN_Frequent_ADIRS_IR_1_Roll,
 
         // ATA34. Navigation / Radio Altimeter
         V32NN_Frequent_RA_1_RadioAltitude,
