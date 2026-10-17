@@ -62448,6 +62448,29 @@ MonoBehaviour:
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 4570946221966465584}
   _avionicsBus: {fileID: 0}
+  cStarToPitchRateKp: 1
+  cStarToPitchRateKi: 10
+  cStarToPitchRateKd: 0.05
+  cStarToPitchRateKdMinIntegrator: -1
+  cStarToPitchRateKdMaxIntegrator: 1
+  pitchRateToSaccInputKp: -1
+  pitchRateToSaccInputKi: -1
+  pitchRateToSaccInputKd: -0.02
+  pitchRateToSaccInputMinIntegrator: -1
+  pitchRateToSaccInputMaxIntegrator: 1
+  currentCStar: 0
+  cStarTarget: 0
+  cStarError: 0
+  cStarToPitchRateIntegrator: 0
+  pilotInputAsPitchRate: 0
+  pilotInputAsPitchRateScale: 0
+  overridePitchRateCommand: 0
+  overridePitchRateCommandValue: 0
+  currentPitchRate: 0
+  pitchRateTarget: 0
+  pitchRateError: 0
+  pitchRateToSaccInputIntegrator: 0
+  pitchRateToSaccInput: 0
 --- !u!114 &4570946221966465584
 MonoBehaviour:
   m_ObjectHideFlags: 0
