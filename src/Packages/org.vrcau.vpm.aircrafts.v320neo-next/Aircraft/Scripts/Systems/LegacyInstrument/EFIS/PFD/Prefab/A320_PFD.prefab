@@ -2612,9 +2612,11 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 7004343545175485341}
+  _avionicsBus: {fileID: 0}
   flightDirector: {fileID: 0}
   flightDirectionIndicator: {fileID: 0}
   landingSystemIndicator: {fileID: 0}
+  useRightEfis: 0
   VSbackground: {fileID: 6924686126374162417}
   VSText: {fileID: 5030881273890965475}
   RadioHeightText: {fileID: 2200053033432345715}
