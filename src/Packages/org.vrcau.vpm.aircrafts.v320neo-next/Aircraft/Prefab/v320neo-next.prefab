@@ -62458,6 +62458,7 @@ MonoBehaviour:
   pitchRateToSaccInputKd: -0.02
   pitchRateToSaccInputMinIntegrator: -1
   pitchRateToSaccInputMaxIntegrator: 1
+  pitchAttitudeLimitKp: 0.5
   currentCStar: 0
   cStarTarget: 0
   cStarError: 0
