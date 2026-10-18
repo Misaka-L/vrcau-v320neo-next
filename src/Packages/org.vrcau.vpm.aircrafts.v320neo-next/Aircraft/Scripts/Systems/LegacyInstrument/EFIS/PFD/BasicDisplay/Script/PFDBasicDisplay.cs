@@ -302,17 +302,7 @@ namespace VAU.V320NeoNext.Runtime.Systems.LegacyInstrument.EFIS.PFD.BasicDisplay
 
             #region VMAX
 
-            var VMAX = VMO;
-            var flaps = _aircraftSystemData.Flap;
-            if (_aircraftSystemData.flapTargetSpeedLimit < VMAX)
-                VMAX = (int)flaps.targetSpeedLimit;
-
-            if (_aircraftSystemData.flapCurrentSpeedLimit < VMAX)
-                VMAX = (int)flaps.speedLimit;
-
-            if (!_aircraftSystemData.isGearsUp && VLE < VMAX)
-                VMAX = VLE;
-
+            var VMAX = _ReadFloat(AvionicsBusFloatDataIds.V32NN_Frequent_FAC_1_MaxSpeed);
             IndicatorAnimator.SetFloat(VMAX_HASH, VMAX / 360f);
 
             #endregion
@@ -326,6 +316,7 @@ namespace VAU.V320NeoNext.Runtime.Systems.LegacyInstrument.EFIS.PFD.BasicDisplay
 
             #region VFE NEXT
 
+            var flaps = _aircraftSystemData.Flap;
             var VFENext = flaps.speedLimits[1]; //0
             switch (flaps.targetDetentIndex)
             {

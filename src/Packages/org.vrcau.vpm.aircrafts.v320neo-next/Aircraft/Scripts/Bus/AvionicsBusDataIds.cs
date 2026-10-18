@@ -23,6 +23,7 @@ namespace VAU.V320NeoNext.Runtime.Bus
 
         // ATA22_40. Auto Flight / Flight Augmentation / FAC
         V32NN_Frequent_FAC_1_Stall_Warning_Speed,
+        V32NN_Frequent_FAC_1_MaxSpeed,
 
         // ATA32. Landing Gear / Brake
         V32NN_Frequent_Brake_Sync_PedalInput,

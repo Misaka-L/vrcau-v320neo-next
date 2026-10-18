@@ -24,16 +24,15 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.Flybywire.Law
         public float pitchRateToSaccInputIntegrator;
         public float pitchRateToSaccInput;
 
+        private const float MaxPitchLimit = 25;
+        private const float MaxPitchLimitFlapFull = 15;
+        private const float MinPitchLimit = -15;
+
         private float RunPitchLaw(float pilotPitchInput)
         {
-            var isCleanConfig = _ReadInt(AvionicsBusIntDataIds.V32NN_Frequent_Flap_SFCC_1_ActualFlapPosition) == 0;
-
-            var cStarTarget = -(isCleanConfig
-                ? pilotPitchInput < 0 ? pilotPitchInput * 1.5f : pilotPitchInput
-                : pilotPitchInput);
-
+            var cStarTarget = GetFinalCStarTarget(pilotPitchInput);
             var targetPitchRate = RunCStarToPitchRate(cStarTarget);
-            
+
             if (pilotInputAsPitchRate)
                 targetPitchRate = pilotPitchInput * pilotInputAsPitchRateScale;
             if (overridePitchRateCommand)
@@ -44,6 +43,42 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.Flybywire.Law
             if (!_ReadBool(AvionicsBusBoolDataIds.V32NN_Infrequent_LandingGear_Sync_GearLeverUp))
                 return pilotPitchInput;
             return outputToSacc;
+        }
+
+        private float GetFinalCStarTarget(float pilotPitchInput)
+        {
+            var flapPosition = _ReadInt(AvionicsBusIntDataIds.V32NN_Frequent_Flap_SFCC_1_ActualFlapPosition);
+            var pitch = _ReadFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADIRS_IR_1_Pitch);
+            var isCleanConfig = flapPosition == 0;
+            var isFlapFull = flapPosition == 5;
+
+            var cStarTarget = -(isCleanConfig
+                ? pilotPitchInput < 0 ? pilotPitchInput * 1.5f : pilotPitchInput
+                : pilotPitchInput);
+
+            // Pitch Attitude Limit
+            var maxPitchUpAngle = isFlapFull ? MaxPitchLimitFlapFull : MaxPitchLimit;
+            if (pitch > maxPitchUpAngle || pitch < MinPitchLimit)
+            {
+                var pitchLimit = pitch > 0 ? maxPitchUpAngle : MinPitchLimit;
+                var pitchLimitError = pitchLimit - pitch;
+                cStarTarget += pitchLimitError * pitchAttitudeLimitKp;
+            }
+
+            float cStarMaxLimit;
+            float cStarMinLimit;
+            if (isCleanConfig)
+            {
+                cStarMaxLimit = 1.5f;
+                cStarMinLimit = -2f;
+            }
+            else
+            {
+                cStarMaxLimit = 1f;
+                cStarMinLimit = -1f;
+            }
+
+            return Mathf.Clamp(cStarTarget, cStarMinLimit, cStarMaxLimit);
         }
 
         private float RunCStarToPitchRate(float cStarTarget)

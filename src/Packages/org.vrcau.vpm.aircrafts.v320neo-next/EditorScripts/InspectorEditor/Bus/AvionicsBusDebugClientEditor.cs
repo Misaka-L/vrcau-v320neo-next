@@ -268,9 +268,9 @@ namespace VAU.V320NeoNext.Editor.InspectorEditor.Bus
 
             double now = EditorApplication.timeSinceStartup;
 
-            if (!force && (!_autoRefresh || now < _nextAutoRefreshTime)) return;
-
-            _nextAutoRefreshTime = now + 0.25;
+            // if (!force && (!_autoRefresh || now < _nextAutoRefreshTime)) return;
+            //
+            // _nextAutoRefreshTime = now + 0.25;
 
             UdonBehaviour udon = _GetUdonBehaviour(client);
             if (udon == null) return;

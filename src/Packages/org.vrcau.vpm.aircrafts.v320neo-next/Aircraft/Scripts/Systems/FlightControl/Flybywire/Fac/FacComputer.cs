@@ -14,6 +14,15 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.Flybywire.Fac
         private const float Flap3MaxAoa = 9.5f;
         private const float FlapFullMaxAoa = 9.5f;
 
+        private const float Vmo = 320;
+        private const float Vle = 280;
+
+        private const float Vfe1 = 230;
+        private const float Vfe1F = 215;
+        private const float Vfe2 = 200;
+        private const float Vfe3 = 185;
+        private const float VfeFull = 170;
+
         private void FixedUpdate()
         {
             var ias = _ReadFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADIRS_ADR_1_IndicatedAirspeed);
@@ -25,6 +34,31 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.Flybywire.Fac
             // var vStall = vs1g * Mathf.Sqrt(gLoad);
 
             _WriteFloat(AvionicsBusFloatDataIds.V32NN_Frequent_FAC_1_Stall_Warning_Speed, vs1g);
+
+            UpdateVMax();
+        }
+
+        private void UpdateVMax()
+        {
+            var targetFlapIndex = _ReadInt(AvionicsBusIntDataIds.V32NN_Frequent_Flap_LevelerPosition);
+            var vMax = Vmo;
+            switch (targetFlapIndex)
+            {
+                case 1:
+                    vMax = Vfe1;
+                    break;
+                case 2:
+                    vMax = Vfe2;
+                    break;
+                case 3:
+                    vMax = Vfe3;
+                    break;
+                case 4:
+                    vMax = VfeFull;
+                    break;
+            }
+
+            _WriteFloat(AvionicsBusFloatDataIds.V32NN_Frequent_FAC_1_MaxSpeed, vMax);
         }
 
         private float GetMaxAoa()

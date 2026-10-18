@@ -34,6 +34,8 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.Flybywire.Law
         private float _pitchRateToSaccInputIntegrator;
         private float _pitchRateToSaccInputLastError;
 
+        [Header("Pitch Attitude Limit")] public float pitchAttitudeLimitKp = 0.5f;
+
         #endregion
 
         #endregion
