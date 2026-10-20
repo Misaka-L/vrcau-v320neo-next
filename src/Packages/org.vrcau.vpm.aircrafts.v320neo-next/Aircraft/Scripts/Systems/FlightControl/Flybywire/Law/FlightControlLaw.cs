@@ -36,6 +36,9 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.Flybywire.Law
 
         [Header("Pitch Attitude Limit")] public float pitchAttitudeLimitKp = 0.5f;
 
+        [Header("High Speed Protection")]
+        public float highSpeedProtectionKp = -0.3f;
+
         #endregion
 
         #endregion

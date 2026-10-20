@@ -23,6 +23,12 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.Flybywire.Law
         public float pitchRateError;
         public float pitchRateToSaccInputIntegrator;
         public float pitchRateToSaccInput;
+        
+        [Header("High Speed Protection Debug")]
+        public float highSpeedProtectionError;
+        public float highSpeedProtectionLastError;
+        public float highSpeedProtectionOutput;
+        public float highSpeedProtectionIntegrator;
 
         private const float MaxPitchLimit = 25;
         private const float MaxPitchLimitFlapFull = 15;
@@ -49,21 +55,14 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.Flybywire.Law
         {
             var flapPosition = _ReadInt(AvionicsBusIntDataIds.V32NN_Frequent_Flap_SFCC_1_ActualFlapPosition);
             var pitch = _ReadFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADIRS_IR_1_Pitch);
+            var ias = _ReadFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADIRS_ADR_1_IndicatedAirspeed);
+            var vMax = _ReadFloat(AvionicsBusFloatDataIds.V32NN_Frequent_FAC_1_MaxSpeed);
             var isCleanConfig = flapPosition == 0;
             var isFlapFull = flapPosition == 5;
 
             var cStarTarget = -(isCleanConfig
                 ? pilotPitchInput < 0 ? pilotPitchInput * 1.5f : pilotPitchInput
                 : pilotPitchInput);
-
-            // Pitch Attitude Limit
-            var maxPitchUpAngle = isFlapFull ? MaxPitchLimitFlapFull : MaxPitchLimit;
-            if (pitch > maxPitchUpAngle || pitch < MinPitchLimit)
-            {
-                var pitchLimit = pitch > 0 ? maxPitchUpAngle : MinPitchLimit;
-                var pitchLimitError = pitchLimit - pitch;
-                cStarTarget += pitchLimitError * pitchAttitudeLimitKp;
-            }
 
             float cStarMaxLimit;
             float cStarMinLimit;
@@ -76,6 +75,27 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.Flybywire.Law
             {
                 cStarMaxLimit = 1f;
                 cStarMinLimit = -1f;
+            }
+
+            // High Speed Protection
+            if (ias > vMax + 6)
+            {
+                // Max Speed vMax+16
+                var targetSpeed = vMax + pilotPitchInput * 10;
+                var speedError = targetSpeed - ias;
+                highSpeedProtectionError = speedError;
+                highSpeedProtectionOutput = speedError * highSpeedProtectionKp;
+
+                cStarTarget += Mathf.Clamp(highSpeedProtectionOutput, cStarMinLimit, cStarMaxLimit);;
+            }
+
+            // Pitch Attitude Limit
+            var maxPitchUpAngle = isFlapFull ? MaxPitchLimitFlapFull : MaxPitchLimit;
+            if (pitch > maxPitchUpAngle || pitch < MinPitchLimit)
+            {
+                var pitchLimit = pitch > 0 ? maxPitchUpAngle : MinPitchLimit;
+                var pitchLimitError = pitchLimit - pitch;
+                cStarTarget += pitchLimitError * pitchAttitudeLimitKp;
             }
 
             return Mathf.Clamp(cStarTarget, cStarMinLimit, cStarMaxLimit);
