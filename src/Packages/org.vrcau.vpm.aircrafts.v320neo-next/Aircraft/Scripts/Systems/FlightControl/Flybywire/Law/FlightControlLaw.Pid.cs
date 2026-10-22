@@ -4,7 +4,7 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.Flybywire.Law
 {
     public partial class FlightControlLaw
     {
-        private static float RunPid(float target,
+        public static float RunPid(float target,
             float current,
             ref float integrator,
             ref float lastError,

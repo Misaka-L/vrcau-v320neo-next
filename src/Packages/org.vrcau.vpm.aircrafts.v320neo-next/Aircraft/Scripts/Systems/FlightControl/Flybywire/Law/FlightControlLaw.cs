@@ -6,42 +6,16 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.Flybywire.Law
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     [DefaultExecutionOrder(AircraftScriptsExecutionOrder.FlightControlComputer)]
+    [RequireComponent(typeof(Pitch.PitchLaw))]
     public sealed partial class FlightControlLaw : AbstractAvionicsBusClient
     {
         // Use variable in partial will mess up version control due to u# bugs.....
-
-        #region Variables
-
-        #region Pitch Law
-
-        [Header("Pitch Law PID")] [Header("C Star -> Pitch Rate")]
-        public float cStarToPitchRateKp = 1;
-        public float cStarToPitchRateKi = 10;
-        public float cStarToPitchRateKd = 0.05f;
-        public float cStarToPitchRateKdMinIntegrator = -1;
-        public float cStarToPitchRateKdMaxIntegrator = 1;
-
-        private float _cStarToPitchRateIntegrator;
-        private float _cStarToPitchRateLastError;
-
-        [Header("Pitch Rate -> Sacc Output")]
-        public float pitchRateToSaccInputKp = -1;
-        public float pitchRateToSaccInputKi = -1;
-        public float pitchRateToSaccInputKd = -0.02f;
-        public float pitchRateToSaccInputMinIntegrator = -1;
-        public float pitchRateToSaccInputMaxIntegrator = 1;
-
-        private float _pitchRateToSaccInputIntegrator;
-        private float _pitchRateToSaccInputLastError;
-
-        [Header("Pitch Attitude Limit")] public float pitchAttitudeLimitKp = 0.5f;
-
-        [Header("High Speed Protection")]
-        public float highSpeedProtectionKp = -0.3f;
-
-        #endregion
-
-        #endregion
+        private Pitch.PitchLaw _pitchLaw;
+        
+        private void Start()
+        {
+            _pitchLaw = GetComponentInChildren<Pitch.PitchLaw>();
+        }
 
         private void FixedUpdate()
         {
@@ -50,7 +24,7 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.Flybywire.Law
 
             var pilotInput = GetPilotInput();
 
-            var pitchOutput = RunPitchLaw(pilotInput.x);
+            var pitchOutput = _pitchLaw.RunPitchLaw(pilotInput.x);
             var rollOutput = RunRollLaw(pilotInput.z);
             var yawOutput = RunYawLaw(pilotInput.y);
 
