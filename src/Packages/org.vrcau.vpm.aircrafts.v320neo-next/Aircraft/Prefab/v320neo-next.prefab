@@ -62459,6 +62459,7 @@ MonoBehaviour:
   pitchRateToSaccInputMinIntegrator: -1
   pitchRateToSaccInputMaxIntegrator: 1
   pitchAttitudeLimitKp: 0.5
+  highSpeedProtectionKp: -0.3
   currentCStar: 0
   cStarTarget: 0
   cStarError: 0
@@ -62472,6 +62473,10 @@ MonoBehaviour:
   pitchRateError: 0
   pitchRateToSaccInputIntegrator: 0
   pitchRateToSaccInput: 0
+  highSpeedProtectionError: 0
+  highSpeedProtectionLastError: 0
+  highSpeedProtectionOutput: 0
+  highSpeedProtectionIntegrator: 0
 --- !u!114 &4570946221966465584
 MonoBehaviour:
   m_ObjectHideFlags: 0
