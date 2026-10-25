@@ -48,14 +48,22 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.Flybywire.Fac
                     vMax = Vfe1;
                     break;
                 case 2:
-                    vMax = Vfe2;
+                    vMax = Vfe1F;
                     break;
                 case 3:
-                    vMax = Vfe3;
+                    vMax = Vfe2;
                     break;
                 case 4:
+                    vMax = Vfe3;
+                    break;
+                case 5:
                     vMax = VfeFull;
                     break;
+            }
+
+            if (!_ReadBool(AvionicsBusBoolDataIds.V32NN_Infrequent_LandingGear_Sync_GearLeverUp)) 
+            {
+                vMax = Mathf.Min(vMax, Vle);
             }
 
             _WriteFloat(AvionicsBusFloatDataIds.V32NN_Frequent_FAC_1_MaxSpeed, vMax);
