@@ -31,9 +31,14 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.Flybywire.Fac
             var maxAoa = GetMaxAoa();
 
             var vs1g = ias * Mathf.Sqrt(aoa / maxAoa);
-            // var vStall = vs1g * Mathf.Sqrt(gLoad);
+            var vStall = vs1g * Mathf.Sqrt(gLoad);
+            var alphaProtectSpeed = ias * Mathf.Sqrt(aoa / (maxAoa - 1f)) * Mathf.Sqrt(gLoad);
+            var lowestSelectableSpeed = ias * Mathf.Sqrt(aoa / (maxAoa - 2f)) * Mathf.Sqrt(gLoad);
 
-            _WriteFloat(AvionicsBusFloatDataIds.V32NN_Frequent_FAC_1_Stall_Warning_Speed, vs1g);
+            _WriteFloat(AvionicsBusFloatDataIds.V32NN_Frequent_FAC_1_Stall_Warning_Speed, vStall);
+            _WriteFloat(AvionicsBusFloatDataIds.V32NN_Frequent_FAC_1_MaxAlphaSpeed, vs1g);
+            _WriteFloat(AvionicsBusFloatDataIds.V32NN_Frequent_FAC_1_AlphaProtectionSpeed, alphaProtectSpeed);
+            _WriteFloat(AvionicsBusFloatDataIds.v32NN_Frequent_FAC_1_LowestSelectableSpeed, lowestSelectableSpeed);
 
             UpdateVMax();
         }

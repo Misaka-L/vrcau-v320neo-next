@@ -62510,6 +62510,13 @@ MonoBehaviour:
   pilotInputAsPitchRateScale: 0
   overridePitchRateCommand: 0
   overridePitchRateCommandValue: 0
+  aoaToPitchRateKp: 1
+  aoaToPitchRateKi: 10
+  aoaToPitchRateKd: 0.05
+  aoaToPitchRateKdMaxIntegrator: 1
+  aoaToPitchRateKdMinIntegrator: -1
+  _aoaToPitchRateIntegrator: 0
+  aoaToPitchRateOutput: 0
   cStarToPitchRateKp: 1
   cStarToPitchRateKi: 10
   cStarToPitchRateKd: 0.05
