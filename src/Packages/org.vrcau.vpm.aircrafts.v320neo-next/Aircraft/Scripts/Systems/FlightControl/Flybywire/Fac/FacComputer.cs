@@ -28,12 +28,18 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.Flybywire.Fac
             var ias = _ReadFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADIRS_ADR_1_IndicatedAirspeed);
             var aoa = _ReadFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADIRS_ADR_1_AoA);
             var gLoad = _ReadFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADIRS_IR_1_Vertical_G_Load);
+
             var maxAoa = GetMaxAoa();
+            var protectionAoa = maxAoa - 1f;
+            var vlsAoa = maxAoa - 2f;
 
             var vs1g = ias * Mathf.Sqrt(aoa / maxAoa);
-            var vStall = vs1g * Mathf.Sqrt(gLoad);
-            var alphaProtectSpeed = ias * Mathf.Sqrt(aoa / (maxAoa - 1f)) * Mathf.Sqrt(gLoad);
-            var lowestSelectableSpeed = ias * Mathf.Sqrt(aoa / (maxAoa - 2f)) * Mathf.Sqrt(gLoad);
+            var vStall = vs1g;
+            var alphaProtectSpeed = ias * Mathf.Sqrt(aoa / protectionAoa);
+            var lowestSelectableSpeed = ias * Mathf.Sqrt(aoa / vlsAoa);
+
+            _WriteFloat(AvionicsBusFloatDataIds.V32NN_Frequent_FAC_1_MaxAoa, maxAoa);
+            _WriteFloat(AvionicsBusFloatDataIds.V32NN_Frequent_FAC_1_ProtectionAoa, protectionAoa);
 
             _WriteFloat(AvionicsBusFloatDataIds.V32NN_Frequent_FAC_1_Stall_Warning_Speed, vStall);
             _WriteFloat(AvionicsBusFloatDataIds.V32NN_Frequent_FAC_1_MaxAlphaSpeed, vStall);

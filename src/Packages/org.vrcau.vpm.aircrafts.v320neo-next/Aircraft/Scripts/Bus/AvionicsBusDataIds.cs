@@ -23,6 +23,8 @@ namespace VAU.V320NeoNext.Runtime.Bus
 
         // ATA22_40. Auto Flight / Flight Augmentation / FAC
         V32NN_Frequent_FAC_1_Stall_Warning_Speed,
+        V32NN_Frequent_FAC_1_MaxAoa,
+        V32NN_Frequent_FAC_1_ProtectionAoa,
         V32NN_Frequent_FAC_1_AlphaProtectionSpeed,
         V32NN_Frequent_FAC_1_MaxAlphaSpeed,
         v32NN_Frequent_FAC_1_LowestSelectableSpeed,

@@ -35,6 +35,13 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.Flybywire.Law.Pitch
             var cStarTarget = GetFinalCStarTarget(pilotPitchInput);
             var targetPitchRate = RunCStarToPitchRate(cStarTarget);
 
+            var highAoaProtectionWeight = GetHighAoaProtectionWeight();
+            if (highAoaProtectionWeight > 0)
+            {
+                targetPitchRate = targetPitchRate * (1 - highAoaProtectionWeight) +
+                                  RunHighAoaProtection(pilotPitchInput) * highAoaProtectionWeight;
+            }
+
             if (pilotInputAsPitchRate)
                 targetPitchRate = pilotPitchInput * pilotInputAsPitchRateScale;
             if (overridePitchRateCommand)

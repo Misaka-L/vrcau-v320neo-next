@@ -62516,6 +62516,8 @@ MonoBehaviour:
   aoaToPitchRateKdMaxIntegrator: 1
   aoaToPitchRateKdMinIntegrator: -1
   _aoaToPitchRateIntegrator: 0
+  _targetAoa: 0
+  _aoaError: 0
   aoaToPitchRateOutput: 0
   cStarToPitchRateKp: 1
   cStarToPitchRateKi: 10
