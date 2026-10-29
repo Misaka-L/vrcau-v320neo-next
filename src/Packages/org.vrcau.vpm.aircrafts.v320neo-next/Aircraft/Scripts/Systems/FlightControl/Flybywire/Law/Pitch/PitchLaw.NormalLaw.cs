@@ -42,16 +42,20 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.Flybywire.Law.Pitch
             var kd = cStarToPitchRateKd;
 
             var currentCStar = GetCStar();
+            _WriteFloat(AvionicsBusFloatDataIds.V32NN_Frequent_FlyByWireDebug_NormalLawTargetCStar, cStarTarget);
+            _WriteFloat(AvionicsBusFloatDataIds.V32NN_Frequent_FlyByWireDebug_NormalLawCurrentCStar, currentCStar);
             this.cStarTarget = cStarTarget;
             this.currentCStar = currentCStar;
             this.cStarError = cStarTarget - currentCStar;
             this.cStarToPitchRateIntegrator = _cStarToPitchRateIntegrator;
 
-            return FlightControlLaw.RunPid(
+            var pitchRateOutput = FlightControlLaw.RunPid(
                 cStarTarget, currentCStar,
                 ref _cStarToPitchRateIntegrator, ref _cStarToPitchRateLastError, kp, ki, kd,
                 cStarToPitchRateKdMinIntegrator, cStarToPitchRateKdMaxIntegrator
             );
+            _WriteFloat(AvionicsBusFloatDataIds.V32NN_Frequent_FlyByWireDebug_NormalLawOutput, pitchRateOutput);
+            return pitchRateOutput;
         }
 
         private float GetCStar()

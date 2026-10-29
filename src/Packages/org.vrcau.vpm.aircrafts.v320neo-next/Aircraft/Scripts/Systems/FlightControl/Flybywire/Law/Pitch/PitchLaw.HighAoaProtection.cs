@@ -19,15 +19,28 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.Flybywire.Law.Pitch
         public float aoaToPitchRateOutput;
 
         private float _lastAoaProtectionWeight;
+        private bool _inAoAProtection;
 
         private float GetHighAoaProtectionWeight()
         {
             var aoa = _ReadFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADIRS_ADR_1_AoA);
             var protectionAoa = _ReadFloat(AvionicsBusFloatDataIds.V32NN_Frequent_FAC_1_ProtectionAoa);
 
-            var weightTarget = aoa > protectionAoa ? 1f : 0f;
+            if (!_inAoAProtection)
+            {
+                _inAoAProtection = aoa > protectionAoa;
+            }
+            else if (aoa < protectionAoa - 1)
+            {
+                _inAoAProtection = false;
+            }
+
+            var weightTarget = _inAoAProtection ? 1 : 0;
+            var weightMaxDelta = Time.fixedDeltaTime * (_inAoAProtection ? 1f : 0.3f);
+
             var weight =
-                Mathf.MoveTowards(_lastAoaProtectionWeight, weightTarget, Time.fixedDeltaTime);
+                Mathf.MoveTowards(_lastAoaProtectionWeight, weightTarget,  weightMaxDelta);
+            _WriteFloat(AvionicsBusFloatDataIds.V32NN_Frequent_FlyByWireDebug_HighAoAProtectionWeight, weight);
             _lastAoaProtectionWeight = weight;
 
             return weight;
@@ -42,6 +55,7 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.Flybywire.Law.Pitch
             var aoaTarget = protectionAoa + (protectionAoa - maxAoa) * pilotPitchInput;
             _targetAoa = aoaTarget;
             _aoaError = aoaTarget - aoa;
+            _WriteFloat(AvionicsBusFloatDataIds.V32NN_Frequent_FlyByWireDebug_HighAoAProtectionTargetAoA, aoaTarget);
 
             aoaToPitchRateOutput = FlightControlLaw.RunPid(
                 aoaTarget, aoa,
@@ -50,6 +64,7 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.Flybywire.Law.Pitch
                 aoaToPitchRateKdMinIntegrator, aoaToPitchRateKdMaxIntegrator
             );
 
+            _WriteFloat(AvionicsBusFloatDataIds.V32NN_Frequent_FlyByWireDebug_HighAoAProtectionOutput, aoaToPitchRateOutput);
             return aoaToPitchRateOutput;
         }
     }
