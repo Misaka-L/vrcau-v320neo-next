@@ -54,6 +54,14 @@ namespace VAU.V320NeoNext.Runtime.Bus
         // ATA70. Engine
         V32NN_Frequent_Engine_Both_ThrustLever,
 
+        // ATA27. Flight Control / FlyByWire Debug
+        V32NN_Frequent_FlyByWireDebug_HighAoAProtectionWeight,
+        V32NN_Frequent_FlyByWireDebug_HighAoAProtectionOutput,
+        V32NN_Frequent_FlyByWireDebug_HighAoAProtectionTargetAoA,
+        V32NN_Frequent_FlyByWireDebug_NormalLawOutput,
+        V32NN_Frequent_FlyByWireDebug_NormalLawTargetCStar,
+        V32NN_Frequent_FlyByWireDebug_NormalLawCurrentCStar,
+        V32NN_Frequent_FlyByWireDebug_PitchRateTarget,
         // ATA27. Flight Control / Flaps & Elevator Trim
         // 襟翼移动期间每帧都会变：只写不 Notify，由 FlapFlightMenuController 轮询后自行算状态文本
         V32NN_Frequent_Flap_SlatAngle,
