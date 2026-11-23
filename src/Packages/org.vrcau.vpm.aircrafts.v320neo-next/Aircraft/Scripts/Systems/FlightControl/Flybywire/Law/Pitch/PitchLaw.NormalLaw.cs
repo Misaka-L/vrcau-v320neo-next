@@ -5,35 +5,12 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.Flybywire.Law.Pitch
 {
     public partial class PitchLaw
     {
-        [Header("Pitch Law PID")] [Header("C Star -> Pitch Rate")]
-        public float cStarToPitchRateKp = 1;
-
-        public float cStarToPitchRateKi = 10;
-        public float cStarToPitchRateKd = 0.05f;
-        public float cStarToPitchRateKdMinIntegrator = -1;
-        public float cStarToPitchRateKdMaxIntegrator = 1;
-
-        [Header("Pitch Attitude Limit")] public float pitchAttitudeLimitKp = 0.5f;
-        [Header("High Speed Protection")] public float highSpeedProtectionKp = -0.3f;
-
         private const float MaxPitchLimit = 25;
         private const float MaxPitchLimitFlapFull = 15;
         private const float MinPitchLimit = -15;
 
-        [Header("C Star Debug")]
-        public float currentCStar;
-        public float cStarTarget;
-        public float cStarError;
-        public float cStarToPitchRateIntegrator;
-
         private float _cStarToPitchRateIntegrator;
         private float _cStarToPitchRateLastError;
-
-        [Header("High Speed Protection Debug")]
-        public float highSpeedProtectionError;
-        public float highSpeedProtectionLastError;
-        public float highSpeedProtectionOutput;
-        public float highSpeedProtectionIntegrator;
 
         private float RunCStarToPitchRate(float cStarTarget)
         {
@@ -44,10 +21,6 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.Flybywire.Law.Pitch
             var currentCStar = GetCStar();
             _WriteFloat(AvionicsBusFloatDataIds.V32NN_Frequent_FlyByWireDebug_NormalLawTargetCStar, cStarTarget);
             _WriteFloat(AvionicsBusFloatDataIds.V32NN_Frequent_FlyByWireDebug_NormalLawCurrentCStar, currentCStar);
-            this.cStarTarget = cStarTarget;
-            this.currentCStar = currentCStar;
-            this.cStarError = cStarTarget - currentCStar;
-            this.cStarToPitchRateIntegrator = _cStarToPitchRateIntegrator;
 
             var pitchRateOutput = FlightControlLaw.RunPid(
                 cStarTarget, currentCStar,
@@ -108,10 +81,9 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.Flybywire.Law.Pitch
                 // Max Speed vMax+16
                 var targetSpeed = vMax + pilotPitchInput * 10;
                 var speedError = targetSpeed - ias;
-                highSpeedProtectionError = speedError;
-                highSpeedProtectionOutput = speedError * highSpeedProtectionKp;
+                var output = speedError * highSpeedProtectionKp;
 
-                cStarTarget += Mathf.Clamp(highSpeedProtectionOutput, cStarMinLimit, cStarMaxLimit);;
+                cStarTarget += Mathf.Clamp(output, cStarMinLimit, cStarMaxLimit);;
             }
 
             // Pitch Attitude Limit

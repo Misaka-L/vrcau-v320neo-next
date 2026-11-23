@@ -14,21 +14,26 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.Flybywire.Law.Pitch
         public float pitchRateToSaccInputMinIntegrator = -1;
         public float pitchRateToSaccInputMaxIntegrator = 1;
 
+        [Header("Pitch Law PID")] [Header("C Star -> Pitch Rate")]
+        public float cStarToPitchRateKp = 1;
+
+        public float cStarToPitchRateKi = 10;
+        public float cStarToPitchRateKd = 0.05f;
+        public float cStarToPitchRateKdMinIntegrator = -1;
+        public float cStarToPitchRateKdMaxIntegrator = 1;
+
+        [Header("Pitch Attitude Limit")] public float pitchAttitudeLimitKp = 0.5f;
+        [Header("High Speed Protection")] public float highSpeedProtectionKp = -0.3f;
+
+        [Header("Aoa -> Pitch Rate")]
+        public float aoaToPitchRateKp = 1;
+        public float aoaToPitchRateKi = 10;
+        public float aoaToPitchRateKd = 0.05f;
+        public float aoaToPitchRateKdMaxIntegrator = 1;
+        public float aoaToPitchRateKdMinIntegrator = -1;
+
         private float _pitchRateToSaccInputIntegrator;
         private float _pitchRateToSaccInputLastError;
-
-        [Header("Pitch Rate Debug")]
-        public float currentPitchRate;
-        public float pitchRateTarget;
-        public float pitchRateError;
-        public float pitchRateToSaccInputIntegrator;
-        public float pitchRateToSaccInput;
-
-        [Header("Pitch Rate Override Debug")]
-        public bool pilotInputAsPitchRate;
-        public float pilotInputAsPitchRateScale;
-        public bool overridePitchRateCommand;
-        public float overridePitchRateCommandValue;
 
         public float RunPitchLaw(float pilotPitchInput)
         {
@@ -42,10 +47,6 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.Flybywire.Law.Pitch
                                   RunHighAoaProtection(pilotPitchInput) * highAoaProtectionWeight;
             }
 
-            if (pilotInputAsPitchRate)
-                targetPitchRate = pilotPitchInput * pilotInputAsPitchRateScale;
-            if (overridePitchRateCommand)
-                targetPitchRate = overridePitchRateCommandValue;
             _WriteFloat(AvionicsBusFloatDataIds.V32NN_Frequent_FlyByWireDebug_PitchRateTarget, targetPitchRate);
             var outputToSacc = RunPitchRateToSaccOutput(targetPitchRate);
 
@@ -62,10 +63,6 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.Flybywire.Law.Pitch
 
             var currentPitchRate =
                 _ReadFloat(AvionicsBusFloatDataIds.V32NN_Frequent_ADIRS_IR_1_PitchRateInDegPerSecond);
-            this.currentPitchRate = currentPitchRate;
-            this.pitchRateTarget = pitchRateTarget;
-            this.pitchRateError = pitchRateTarget - currentPitchRate;
-            this.pitchRateToSaccInputIntegrator = _pitchRateToSaccInputIntegrator;
 
             var pitchRateRawOutput = FlightControlLaw.RunPid(
                 pitchRateTarget, currentPitchRate,
@@ -73,7 +70,6 @@ namespace VAU.V320NeoNext.Runtime.Systems.FlightControl.Flybywire.Law.Pitch
                 pitchRateToSaccInputMinIntegrator, pitchRateToSaccInputMaxIntegrator
             );
 
-            this.pitchRateToSaccInput = pitchRateRawOutput;
             return Mathf.Clamp(pitchRateRawOutput, -1f, 1f);
         }
     }

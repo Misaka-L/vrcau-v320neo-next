@@ -62699,26 +62699,6 @@ MonoBehaviour:
   pitchRateToSaccInputKd: -0.02
   pitchRateToSaccInputMinIntegrator: -1
   pitchRateToSaccInputMaxIntegrator: 1
-  currentPitchRate: 0
-  pitchRateTarget: 0
-  pitchRateError: 0
-  pitchRateToSaccInputIntegrator: 0
-  pitchRateToSaccInput: 0
-  pilotInputAsPitchRate: 0
-  pilotInputAsPitchRateScale: 0
-  overridePitchRateCommand: 0
-  overridePitchRateCommandValue: 0
-  aoaToPitchRateKp: 1
-  aoaToPitchRateKi: 10
-  aoaToPitchRateKd: 0.05
-  aoaToPitchRateKdMaxIntegrator: 1
-  aoaToPitchRateKdMinIntegrator: -1
-  aoaToPitchRateMin: -5
-  aoaToPitchRateMax: 5
-  _aoaToPitchRateIntegrator: 0
-  _targetAoa: 0
-  _aoaError: 0
-  aoaToPitchRateOutput: 0
   cStarToPitchRateKp: 1
   cStarToPitchRateKi: 10
   cStarToPitchRateKd: 0.05
@@ -62726,14 +62706,11 @@ MonoBehaviour:
   cStarToPitchRateKdMaxIntegrator: 1
   pitchAttitudeLimitKp: 0.5
   highSpeedProtectionKp: -0.3
-  currentCStar: 0
-  cStarTarget: 0
-  cStarError: 0
-  cStarToPitchRateIntegrator: 0
-  highSpeedProtectionError: 0
-  highSpeedProtectionLastError: 0
-  highSpeedProtectionOutput: 0
-  highSpeedProtectionIntegrator: 0
+  aoaToPitchRateKp: 1
+  aoaToPitchRateKi: 10
+  aoaToPitchRateKd: 0.05
+  aoaToPitchRateKdMaxIntegrator: 1
+  aoaToPitchRateKdMinIntegrator: -1
 --- !u!114 &9155682770574956502
 MonoBehaviour:
   m_ObjectHideFlags: 0
